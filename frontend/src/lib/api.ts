@@ -195,6 +195,9 @@ export const scoresAPI = {
 
 // Announcements API
 export const announcementsAPI = {
+  getAll: () =>
+    api.get('/api/announcements'),
+    
   create: (announcementData: any) =>
     api.post('/api/announcements', announcementData),
   

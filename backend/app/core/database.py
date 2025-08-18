@@ -32,7 +32,14 @@ async def init_db():
         from motor.motor_asyncio import AsyncIOMotorClient
         global mongodb_client, mongodb_database
         mongodb_client = AsyncIOMotorClient(settings.MONGODB_URL)
-        mongodb_database = mongodb_client[settings.MONGODB_DATABASE]
+        # Verify connection by issuing a ping; if it fails, disable MongoDB features
+        try:
+            await mongodb_client.admin.command('ping')
+            mongodb_database = mongodb_client[settings.MONGODB_DATABASE]
+        except Exception as e:
+            print(f"Warning: Could not connect to MongoDB at {settings.MONGODB_URL}: {e}")
+            mongodb_client = None
+            mongodb_database = None
     except ImportError:
         print("Warning: motor not installed, MongoDB features will be disabled")
 

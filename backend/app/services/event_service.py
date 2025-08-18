@@ -34,7 +34,7 @@ class EventService:
             is_public=event_data.is_public,
             registration_required=event_data.registration_required,
             organizer_id=organizer_id,
-            status=EventStatus.DRAFT
+            status=EventStatus.PUBLISHED  # Auto-publish new events
         )
         
         self.db.add(event)

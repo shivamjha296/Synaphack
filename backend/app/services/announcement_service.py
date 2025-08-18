@@ -72,26 +72,71 @@ class AnnouncementService:
         """Get all announcements for an event"""
         if not self.mongodb:
             return []
-            
-        cursor = self.mongodb.announcements.find(
-            {"event_id": event_id, "is_active": True}
-        ).sort("created_at", -1)
-        
-        announcements = []
-        async for doc in cursor:
-            announcements.append(AnnouncementResponse(
-                id=doc["_id"],
-                title=doc["title"],
-                content=doc["content"],
-                priority=doc["priority"],
-                target_audience=doc["target_audience"],
-                event_id=doc["event_id"],
-                author_id=doc["author_id"],
-                author_name=doc["author_name"],
-                created_at=doc["created_at"]
-            ))
-        
-        return announcements
+
+        try:
+            cursor = self.mongodb.announcements.find(
+                {"event_id": event_id, "is_active": True}
+            ).sort("created_at", -1)
+
+            announcements = []
+            async for doc in cursor:
+                announcements.append(AnnouncementResponse(
+                    id=doc["_id"],
+                    title=doc["title"],
+                    content=doc["content"],
+                    priority=doc["priority"],
+                    target_audience=doc["target_audience"],
+                    event_id=doc["event_id"],
+                    author_id=doc["author_id"],
+                    author_name=doc["author_name"],
+                    created_at=doc["created_at"]
+                ))
+
+            return announcements
+        except Exception as e:
+            # If MongoDB is unreachable or an error occurs, log and return empty list
+            print(f"Warning: Failed to read announcements from MongoDB: {e}")
+            return []
+
+    async def get_for_user(self, user_id: str, user_role: str) -> List[AnnouncementResponse]:
+        """Get all announcements relevant to a user based on their role"""
+        if self.mongodb is None:
+            return []
+
+        # Build query based on user role
+        query = {"is_active": True}
+
+        # Filter by target audience
+        if user_role == "admin":
+            # Admins see all announcements
+            pass
+        elif user_role == "organizer":
+            query["target_audience"] = {"$in": ["all", "organizers"]}
+        elif user_role == "judge":
+            query["target_audience"] = {"$in": ["all", "judges"]}
+        else:  # participant
+            query["target_audience"] = {"$in": ["all", "participants"]}
+
+        try:
+            cursor = self.mongodb.announcements.find(query).sort("created_at", -1)
+            announcements = []
+            async for doc in cursor:
+                announcements.append(AnnouncementResponse(
+                    id=doc["_id"],
+                    title=doc["title"],
+                    content=doc["content"],
+                    priority=doc["priority"],
+                    target_audience=doc["target_audience"],
+                    event_id=doc["event_id"],
+                    author_id=doc["author_id"],
+                    author_name=doc["author_name"],
+                    created_at=doc["created_at"]
+                ))
+
+            return announcements
+        except Exception as e:
+            print(f"Warning: Failed to read announcements from MongoDB: {e}")
+            return []
 
     async def delete(self, announcement_id: str) -> bool:
         """Delete announcement (soft delete)"""

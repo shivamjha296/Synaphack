@@ -40,6 +40,7 @@ export interface Event {
   organizer: User
   participants_count: number
   teams_count: number
+  is_registered?: boolean
   created_at: string
 }
 
@@ -583,5 +584,68 @@ export const useSubmissionsStore = create<SubmissionsState>((set, get) => ({
 
   setCurrentSubmission: (submission: Submission | null) => {
     set({ currentSubmission: submission })
+  },
+}))
+
+// Announcements Store
+interface AnnouncementsState {
+  announcements: Announcement[]
+  loading: boolean
+  fetchAnnouncements: (eventId?: string) => Promise<void>
+  createAnnouncement: (announcementData: any) => Promise<Announcement>
+  deleteAnnouncement: (id: string) => Promise<void>
+  markAsRead: (id: string) => void
+}
+
+export const useAnnouncementsStore = create<AnnouncementsState>((set, get) => ({
+  announcements: [],
+  loading: false,
+
+  fetchAnnouncements: async (eventId?: string) => {
+    set({ loading: true })
+    try {
+      const { announcementsAPI } = await import('./api')
+      const response = eventId 
+        ? await announcementsAPI.getEventAnnouncements(eventId)
+        : await announcementsAPI.getAll()
+      set({ announcements: response.data, loading: false })
+    } catch (error) {
+      set({ loading: false })
+      throw error
+    }
+  },
+
+  createAnnouncement: async (announcementData: any) => {
+    try {
+      const { announcementsAPI } = await import('./api')
+      const response = await announcementsAPI.create(announcementData)
+      const newAnnouncement = response.data
+      
+      set(state => ({ announcements: [newAnnouncement, ...state.announcements] }))
+      return newAnnouncement
+    } catch (error) {
+      throw error
+    }
+  },
+
+  deleteAnnouncement: async (id: string) => {
+    try {
+      const { announcementsAPI } = await import('./api')
+      await announcementsAPI.delete(id)
+      
+      set(state => ({
+        announcements: state.announcements.filter(announcement => announcement.id !== id)
+      }))
+    } catch (error) {
+      throw error
+    }
+  },
+
+  markAsRead: (id: string) => {
+    set(state => ({
+      announcements: state.announcements.map(announcement =>
+        announcement.id === id ? { ...announcement, is_read: true } : announcement
+      )
+    }))
   },
 }))

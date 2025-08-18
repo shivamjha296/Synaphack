@@ -10,10 +10,12 @@ import {
   Settings, 
   LogOut,
   Plus,
-  Search
+  Search,
+  Megaphone,
+  CheckCircle
 } from 'lucide-react'
 
-import { useAuthStore, useEventsStore } from '@/lib/store'
+import { useAuthStore, useEventsStore, useAnnouncementsStore } from '@/lib/store'
 
 // Dashboard Component for different user roles
 export default function DashboardPage() {
@@ -104,13 +106,16 @@ export default function DashboardPage() {
 function OrganizerDashboard() {
   const [activeTab, setActiveTab] = useState('events')
   const [isClient, setIsClient] = useState(false)
+  const { announcements, fetchAnnouncements } = useAnnouncementsStore()
 
   useEffect(() => {
     setIsClient(true)
-  }, [])
+    fetchAnnouncements()
+  }, [fetchAnnouncements])
 
   const tabs = [
     { id: 'events', name: 'My Events', icon: Calendar },
+    { id: 'announcements', name: 'Announcements', icon: Megaphone },
     { id: 'analytics', name: 'Analytics', icon: Trophy },
     { id: 'settings', name: 'Settings', icon: Settings },
   ]
@@ -149,8 +154,9 @@ function OrganizerDashboard() {
       {/* Tab Content */}
       <div className="mt-8">
         {activeTab === 'events' && <EventsManagement />}
+        {activeTab === 'announcements' && <AnnouncementsManagement />}
         {activeTab === 'analytics' && <Analytics />}
-        {activeTab === 'settings' && <Settings />}
+        {activeTab === 'settings' && <UserSettings />}
       </div>
     </div>
   )
@@ -267,7 +273,12 @@ function StatCard({ title, value, icon: Icon }: { title: string; value: string; 
 
 function EventsManagement() {
   const router = useRouter()
-  
+  const { events, fetchEvents, loading } = useEventsStore()
+
+  useEffect(() => {
+    fetchEvents()
+  }, [fetchEvents])
+
   const handleCreateEvent = () => {
     router.push('/events')
   }
@@ -284,15 +295,73 @@ function EventsManagement() {
           <span>Create Event</span>
         </button>
       </div>
-      
-      <div className="bg-white shadow rounded-lg p-6">
-        <p className="text-gray-500">No events created yet. Create your first event to get started!</p>
+
+      <div>
+        {loading ? (
+          <div className="bg-white shadow rounded-lg p-6 text-center">
+            <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+            <p className="mt-2 text-gray-600">Loading events...</p>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="bg-white shadow rounded-lg p-6">
+            <p className="text-gray-500">No events created yet. Create your first event to get started!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {events.map((ev: any) => (
+              <div key={ev.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 className="text-md font-semibold text-gray-900">{ev.title || ev.name}</h4>
+                    <span className="text-sm text-gray-500">{ev.status}</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{ev.description}</p>
+                <div className="text-sm text-gray-500">
+                  <div>{new Date(ev.event_start || ev.start_date).toLocaleDateString()} - {new Date(ev.event_end || ev.end_date).toLocaleDateString()}</div>
+                  <div className="mt-2">{ev.venue || ev.location}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
 function AvailableEvents() {
+  const { events, fetchEvents, loading, registerForEvent } = useEventsStore()
+  const [query, setQuery] = useState('')
+
+  useEffect(() => {
+    fetchEvents()
+  }, [fetchEvents])
+
+  const filtered = events.filter(e => {
+    const text = `${(e as any).title || (e as any).name || ''} ${(e as any).description || ''}`
+    return text.toLowerCase().includes(query.toLowerCase())
+  })
+
+  const handleJoin = async (id: string) => {
+    try {
+      await registerForEvent(id)
+      alert('Successfully registered for the event')
+    } catch (err: any) {
+      console.error('Join failed', err)
+      
+      // Extract error message from the response
+      let errorMessage = 'Failed to register for event'
+      if (err?.response?.data?.detail) {
+        errorMessage = err.response.data.detail
+      } else if (err?.message) {
+        errorMessage = err.message
+      }
+      
+      alert(errorMessage)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -300,6 +369,8 @@ function AvailableEvents() {
         <div className="flex items-center space-x-2">
           <Search className="h-5 w-5 text-gray-400" />
           <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             type="text"
             placeholder="Search events..."
             className="input-field"
@@ -307,12 +378,55 @@ function AvailableEvents() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Event cards would be rendered here */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <p className="text-gray-500">Loading events...</p>
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <p className="mt-2 text-gray-600">Loading events...</p>
         </div>
-      </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12">
+          <Calendar className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No events found</h3>
+          <p className="mt-1 text-sm text-gray-500">Try adjusting your search or check back later.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtered.map((event: any) => (
+            <div key={event.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-4">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-md font-semibold text-gray-900">{event.title || event.name}</h4>
+                    {event.is_registered && (
+                      <div title="You are registered for this event">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-sm text-gray-500">{event.status}</span>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{event.description}</p>
+              <div className="text-sm text-gray-500 mb-4">
+                <div>{new Date(event.event_start || event.start_date).toLocaleDateString()} - {new Date(event.event_end || event.end_date).toLocaleDateString()}</div>
+                <div className="mt-2">{event.venue || event.location}</div>
+              </div>
+              <div className="flex space-x-2">
+                {event.is_registered ? (
+                  <button className="btn-secondary text-sm flex-1" disabled>
+                    Already Registered
+                  </button>
+                ) : (
+                  <button className="btn-primary text-sm flex-1" onClick={() => handleJoin(event.id)}>
+                    Join
+                  </button>
+                )}
+                <button className="btn-secondary text-sm">View</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -405,6 +519,83 @@ function SystemHealth() {
           <span className="text-gray-600">Database</span>
           <span className="text-green-600 font-medium">Connected</span>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function UserSettings() {
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-medium text-gray-900">Settings</h3>
+      <div className="bg-white shadow rounded-lg p-6">
+        <p className="text-gray-500">Settings panel will be implemented here.</p>
+      </div>
+    </div>
+  )
+}
+
+function AnnouncementsManagement() {
+  const router = useRouter()
+  const { announcements, fetchAnnouncements, loading } = useAnnouncementsStore()
+
+  useEffect(() => {
+    fetchAnnouncements()
+  }, [fetchAnnouncements])
+
+  const handleCreateAnnouncement = () => {
+    router.push('/announcements')
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium text-gray-900">Recent Announcements</h3>
+        <button 
+          onClick={handleCreateAnnouncement}
+          className="btn-primary flex items-center space-x-2"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Create Announcement</span>
+        </button>
+      </div>
+
+      <div>
+        {loading ? (
+          <div className="bg-white shadow rounded-lg p-6 text-center">
+            <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+            <p className="mt-2 text-gray-600">Loading announcements...</p>
+          </div>
+        ) : announcements.length === 0 ? (
+          <div className="bg-white shadow rounded-lg p-6">
+            <p className="text-gray-500">No announcements yet. Create your first announcement to get started!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {announcements.slice(0, 5).map((announcement: any) => (
+              <div key={announcement.id} className="bg-white rounded-lg shadow-sm border p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 className="text-md font-semibold text-gray-900">{announcement.title}</h4>
+                    <span className="text-sm text-gray-500">{announcement.priority}</span>
+                  </div>
+                  <span className="text-sm text-gray-400">
+                    {new Date(announcement.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 line-clamp-2">{announcement.content}</p>
+              </div>
+            ))}
+            <div className="text-center">
+              <button 
+                onClick={handleCreateAnnouncement}
+                className="btn-secondary text-sm"
+              >
+                View All Announcements
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

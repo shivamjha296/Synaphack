@@ -128,6 +128,7 @@ class EventResponse(EventBase):
     created_at: datetime
     participants_count: Optional[int] = 0
     teams_count: Optional[int] = 0
+    is_registered: Optional[bool] = False  # Indicates if current user is registered
 
 # Team schemas
 class TeamBase(BaseSchema):

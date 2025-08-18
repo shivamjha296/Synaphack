@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.core.database import get_database, get_mongodb
 from app.models.schemas import AnnouncementCreate, AnnouncementResponse
 from app.models.sql_models import User, UserRole
 from app.services.announcement_service import AnnouncementService
-from app.api.auth import get_current_active_user
+from app.api.auth import get_current_active_user, get_current_user_optional
 
 router = APIRouter()
 
@@ -28,6 +28,22 @@ async def create_announcement(
     
     announcement = await announcement_service.create(announcement_data, current_user.id, current_user.full_name)
     return announcement
+
+@router.get("/", response_model=List[AnnouncementResponse])
+async def get_all_announcements(
+    current_user: Optional[User] = Depends(get_current_user_optional),
+    db: Session = Depends(get_database)
+):
+    """Get all announcements for current user (optional auth). Returns empty list for unauthenticated users."""
+    mongodb = await get_mongodb()
+    announcement_service = AnnouncementService(db, mongodb)
+
+    if not current_user:
+        # For unauthenticated users, return an empty list (or public announcements in future)
+        return []
+
+    announcements = await announcement_service.get_for_user(current_user.id, current_user.role)
+    return announcements
 
 @router.get("/event/{event_id}", response_model=List[AnnouncementResponse])
 async def get_event_announcements(

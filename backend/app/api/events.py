@@ -12,7 +12,7 @@ from app.models.schemas import (
 )
 from app.models.sql_models import User, UserRole, EventStatus
 from app.services.event_service import EventService
-from app.api.auth import get_current_active_user
+from app.api.auth import get_current_active_user, get_current_user_optional
 
 router = APIRouter()
 
@@ -47,6 +47,7 @@ async def get_events(
     status: Optional[EventStatus] = None,
     organizer_id: Optional[str] = None,
     search: Optional[str] = None,
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_database)
 ):
     """Get all events with filtering and pagination"""
@@ -65,6 +66,11 @@ async def get_events(
         event_response.organizer = UserResponse.from_orm(event.organizer)
         event_response.participants_count = event_service.get_participants_count(event.id)
         event_response.teams_count = event_service.get_teams_count(event.id)
+        # Set registration status if user is authenticated
+        if current_user:
+            event_response.is_registered = event_service.is_user_registered(event.id, current_user.id)
+        else:
+            event_response.is_registered = False
         response_events.append(event_response)
     
     return response_events
@@ -90,6 +96,8 @@ async def get_my_events(
         event_response.organizer = UserResponse.from_orm(event.organizer)
         event_response.participants_count = event_service.get_participants_count(event.id)
         event_response.teams_count = event_service.get_teams_count(event.id)
+        # For user's own events, they are always considered "registered" in some sense
+        event_response.is_registered = event_service.is_user_registered(event.id, current_user.id)
         response_events.append(event_response)
     
     return response_events
@@ -97,6 +105,7 @@ async def get_my_events(
 @router.get("/{event_id}", response_model=EventResponse)
 async def get_event(
     event_id: str,
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_database)
 ):
     """Get event by ID"""
@@ -118,6 +127,11 @@ async def get_event(
     event_response.organizer = UserResponse.from_orm(event.organizer)
     event_response.participants_count = event_service.get_participants_count(event.id)
     event_response.teams_count = event_service.get_teams_count(event.id)
+    # Set registration status if user is authenticated
+    if current_user:
+        event_response.is_registered = event_service.is_user_registered(event.id, current_user.id)
+    else:
+        event_response.is_registered = False
     
     return event_response
 

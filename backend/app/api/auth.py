@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 import requests
+from typing import Optional
 
 from app.core.database import get_database
 from app.core.security import (
@@ -61,6 +62,32 @@ def get_current_active_user(current_user: User = Depends(get_current_user)) -> U
             detail="Inactive user"
         )
     return current_user
+
+def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
+    db: Session = Depends(get_database)
+) -> Optional[User]:
+    """Get current authenticated user (optional - returns None if no auth provided)"""
+    if not credentials:
+        return None
+    
+    try:
+        token = credentials.credentials
+        payload = verify_token(token)
+        user_id = payload.get("sub")
+        
+        if not user_id:
+            return None
+        
+        user_service = UserService(db)
+        user = user_service.get_by_id(user_id)
+        
+        if not user or not user.is_active:
+            return None
+        
+        return user
+    except Exception:
+        return None
 
 @router.post("/register", response_model=UserResponse)
 async def register(user_data: UserCreate, db: Session = Depends(get_database)):
