@@ -255,13 +255,18 @@ export const useEventsStore = create<EventsState>((set, get) => ({
 
   createEvent: async (eventData: any) => {
     try {
+      console.log('Store: createEvent called with data:', eventData)
       const { eventsAPI } = await import('./api')
+      console.log('Store: About to call eventsAPI.create')
       const response = await eventsAPI.create(eventData)
+      console.log('Store: API response received:', response)
       const newEvent = response.data
       
       set(state => ({ events: [newEvent, ...state.events] }))
+      console.log('Store: Event added to state successfully')
       return newEvent
     } catch (error) {
+      console.error('Store: createEvent error:', error)
       throw error
     }
   },

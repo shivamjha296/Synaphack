@@ -94,8 +94,10 @@ export const eventsAPI = {
   getById: (id: string) =>
     api.get(`/api/events/${id}`),
   
-  create: (eventData: any) =>
-    api.post('/api/events', eventData),
+  create: (eventData: any) => {
+    console.log('API: create event called with data:', eventData)
+    return api.post('/api/events', eventData)
+  },
   
   update: (id: string, eventData: any) =>
     api.put(`/api/events/${id}`, eventData),

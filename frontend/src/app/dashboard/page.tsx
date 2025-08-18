@@ -21,22 +21,37 @@ export default function DashboardPage() {
   const { events, fetchEvents, loading } = useEventsStore()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('overview')
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isClient) return
+    
     if (!user) {
       router.push('/auth/login')
       return
     }
     fetchEvents()
-  }, [user, router, fetchEvents])
+  }, [user, router, fetchEvents, isClient])
 
   const handleLogout = () => {
     logout()
     router.push('/')
   }
 
+  if (!isClient) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-gray-600">Loading...</div>
+    </div>
+  }
+
   if (!user) {
-    return <div>Loading...</div>
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-gray-600">Redirecting to login...</div>
+    </div>
   }
 
   // Role-specific dashboard content
@@ -88,12 +103,21 @@ export default function DashboardPage() {
 // Organizer Dashboard
 function OrganizerDashboard() {
   const [activeTab, setActiveTab] = useState('events')
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const tabs = [
     { id: 'events', name: 'My Events', icon: Calendar },
     { id: 'analytics', name: 'Analytics', icon: Trophy },
     { id: 'settings', name: 'Settings', icon: Settings },
   ]
+
+  if (!isClient) {
+    return <div className="text-gray-600">Loading dashboard...</div>
+  }
 
   return (
     <div>
@@ -242,11 +266,20 @@ function StatCard({ title, value, icon: Icon }: { title: string; value: string; 
 }
 
 function EventsManagement() {
+  const router = useRouter()
+  
+  const handleCreateEvent = () => {
+    router.push('/events')
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-gray-900">My Events</h3>
-        <button className="btn-primary flex items-center space-x-2">
+        <button 
+          onClick={handleCreateEvent}
+          className="btn-primary flex items-center space-x-2"
+        >
           <Plus className="h-4 w-4" />
           <span>Create Event</span>
         </button>

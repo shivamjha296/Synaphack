@@ -145,12 +145,43 @@ export default function EventsPage() {
           event={editingEvent}
           onClose={() => setShowCreateModal(false)}
           onSave={async (data) => {
-            if (editingEvent) {
-              await updateEvent(editingEvent.id, data)
-            } else {
-              await createEvent(data)
+            try {
+              console.log('Form data received:', data)
+              
+              // Transform frontend form data to backend schema
+              const transformedData = {
+                title: data.name,
+                description: data.description,
+                mode: data.is_virtual ? 'virtual' : 'in-person',
+                venue: data.location,
+                max_participants: data.max_participants,
+                max_team_size: data.max_team_size,
+                registration_start: new Date().toISOString(),
+                registration_end: new Date(data.registration_deadline).toISOString(),
+                event_start: new Date(data.start_date).toISOString(),
+                event_end: new Date(data.end_date).toISOString(),
+                rules: data.rules,
+                prizes: data.prizes ? [{ position: 'Winner', prize: data.prizes }] : [],
+                is_public: true,
+                event_type: 'hackathon'
+              }
+
+              console.log('Transformed data:', transformedData)
+
+              if (editingEvent) {
+                console.log('Updating event:', editingEvent.id)
+                await updateEvent(editingEvent.id, transformedData)
+              } else {
+                console.log('Creating new event')
+                await createEvent(transformedData)
+              }
+              
+              console.log('Event operation successful')
+              setShowCreateModal(false)
+            } catch (error) {
+              console.error('Event operation failed:', error)
+              alert(`Error: ${(error as any)?.message || error}`)
             }
-            setShowCreateModal(false)
           }}
         />
       )}
@@ -184,7 +215,7 @@ function EventCard({ event, onEdit, onDelete }: {
       <div className="p-6">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{event.name}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{event.title || event.name}</h3>
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
               {event.status}
             </span>
@@ -210,17 +241,17 @@ function EventCard({ event, onEdit, onDelete }: {
         <div className="space-y-2 mb-4">
           <div className="flex items-center text-sm text-gray-500">
             <Calendar className="h-4 w-4 mr-2" />
-            {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}
+            {new Date(event.event_start || event.start_date).toLocaleDateString()} - {new Date(event.event_end || event.end_date).toLocaleDateString()}
           </div>
           <div className="flex items-center text-sm text-gray-500">
             <MapPin className="h-4 w-4 mr-2" />
-            {event.location}
+            {event.venue || event.location}
           </div>
           <div className="flex items-center text-sm text-gray-500">
             <Users className="h-4 w-4 mr-2" />
-            {event.registered_count || 0} / {event.max_participants} participants
+            {event.participants_count || event.registered_count || 0} / {event.max_participants} participants
           </div>
-          {event.entry_fee > 0 && (
+          {(event.entry_fee > 0) && (
             <div className="flex items-center text-sm text-gray-500">
               <DollarSign className="h-4 w-4 mr-2" />
               ${event.entry_fee}
@@ -261,17 +292,17 @@ function EventModal({
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: event ? {
-      name: event.name,
+      name: event.title || event.name,
       description: event.description,
-      start_date: event.start_date?.slice(0, 16),
-      end_date: event.end_date?.slice(0, 16),
-      registration_deadline: event.registration_deadline?.slice(0, 16),
+      start_date: event.event_start?.slice(0, 16) || event.start_date?.slice(0, 16),
+      end_date: event.event_end?.slice(0, 16) || event.end_date?.slice(0, 16),
+      registration_deadline: event.registration_end?.slice(0, 16) || event.registration_deadline?.slice(0, 16),
       max_participants: event.max_participants,
       max_team_size: event.max_team_size,
-      location: event.location,
-      is_virtual: event.is_virtual,
-      entry_fee: event.entry_fee,
-      prizes: event.prizes,
+      location: event.venue || event.location,
+      is_virtual: event.mode === 'virtual' || event.is_virtual,
+      entry_fee: event.entry_fee || 0,
+      prizes: typeof event.prizes === 'string' ? event.prizes : (event.prizes?.[0]?.prize || ''),
       rules: event.rules,
     } : {
       max_participants: 100,
