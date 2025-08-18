@@ -48,87 +48,145 @@ hackathon-platform/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 18+ (LTS recommended)
+- npm 9+ or Yarn/Pnpm
 - Python 3.9+
-- Docker & Docker Compose
-- Azure Account (for deployment)
+- Docker & Docker Compose (recommended for full-stack local dev)
+- Optional: Azure account for production deployment
 
-### Local Development
+If you just cloned the repo and want the simplest way to run everything, use Docker Compose (recommended). If you prefer to develop locally without containers, follow the Local Development steps below.
 
-1. **Clone the repository:**
+Quick checklist for cloners:
+
+- Create GitHub personal access token (if you plan to push to remote)
+- Install Git LFS if you plan to add large binary assets (see note below)
+- Copy `.env` example files for backend and frontend before starting
+
+### Option A — Recommended: Start with Docker Compose (fast & reproducible)
+
+1. Copy environment file templates and edit values:
+
+```powershell
+cd hackathon-platform
+copy backend\.env.example backend\.env
+copy frontend\.env.example frontend\.env.local
+```
+
+Edit `backend/.env` and `frontend/.env.local` to set database credentials, JWT secret, and OAuth keys.
+
+2. Start services with Docker Compose:
+
+```powershell
+docker-compose up -d
+```
+
+3. Initialize the database and seed data (one-time):
+
+```powershell
+docker-compose exec backend alembic upgrade head
+docker-compose exec backend python scripts/seed_data.py  # optional
+```
+
+4. Open the app and API docs:
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Docs (Swagger): http://localhost:8000/docs
+
+Notes:
+- On Windows PowerShell, prefix `docker-compose` commands with `&` if you run into execution parsing issues.
+
+### Option B — Local Development (without Docker)
+
+Follow this if you want to run the frontend/backend directly on your machine.
+
+1) Clone the repo:
+
 ```bash
-git clone <repository-url>
+git clone https://github.com/<your-org-or-username>/<repo>.git
 cd hackathon-platform
 ```
 
-2. **Backend Setup:**
+2) Backend setup (Unix/macOS):
+
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
+# edit .env with your connection strings and secrets
+alembic upgrade head
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-3. **Frontend Setup:**
+On Windows (PowerShell):
+
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+copy .env.example .env
+# edit backend\.env
+alembic upgrade head
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+3) Frontend setup:
+
 ```bash
 cd frontend
 npm install
-```
-
-4. **Environment Variables:**
-
-Create `.env` files in both backend and frontend directories:
-
-**Backend (.env):**
-```env
-DATABASE_URL=your_azure_sql_connection_string
-MONGODB_URL=your_mongodb_connection_string
-JWT_SECRET_KEY=your_jwt_secret
-GOOGLE_CLIENT_ID=your_google_oauth_client_id
-GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
-AZURE_STORAGE_CONNECTION_STRING=your_azure_blob_connection_string
-AZURE_STORAGE_CONTAINER_NAME=hackathon-uploads
-```
-
-**Frontend (.env.local):**
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_oauth_client_id
-```
-
-5. **Database Setup:**
-```bash
-# Run database migrations
-cd backend
-alembic upgrade head
-
-# Seed initial data
-python seed_data.py
-```
-
-6. **Start Development Servers:**
-```bash
-# Backend (from backend directory)
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Frontend (from frontend directory)
+copy .env.example .env.local
+# edit frontend/.env.local
 npm run dev
 ```
 
-Visit:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
+On Windows (PowerShell):
 
-### Docker Setup
-
-```bash
-# Build and run with Docker Compose
-docker-compose up --build
-
-# Run in production mode
-docker-compose -f docker-compose.prod.yml up --build
+```powershell
+cd frontend
+npm install
+copy .env.example .env.local
+# edit frontend\.env.local
+npm run dev
 ```
+
+Visit the same URLs as above once both servers are running.
+
+### Git LFS note (for large binaries)
+
+If you plan to commit large binaries (for example compiled native modules), enable Git LFS and track those files before adding them to the repo:
+
+```powershell
+git lfs install
+git lfs track "*.node"
+git add .gitattributes
+git commit -m "chore: enable git lfs for large binaries"
+```
+
+Do NOT commit `node_modules/` or compiled artifacts — they should be ignored by `.gitignore`.
+
+### Troubleshooting common issues
+
+- Error: Cannot find module '@tailwindcss/forms' — run `npm install` inside `frontend`.
+- Push rejected due to large files (>100MB) — remove the file from git history or use Git LFS as explained above.
+- Next.js build errors after dependency changes — remove `node_modules` and reinstall:
+
+```powershell
+cd frontend
+rm -r node_modules package-lock.json  # use Remove-Item on PowerShell if needed
+npm install
+```
+
+### Docker cleanup & rebuild (if things look stale)
+
+```powershell
+docker-compose down --volumes --remove-orphans
+docker-compose up --build -d
+```
+
 
 ## 📱 User Roles & Features
 
