@@ -35,7 +35,10 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB
     ALLOWED_FILE_TYPES: List[str] = ["pdf", "ppt", "pptx", "doc", "docx", "jpg", "jpeg", "png"]
     
-    class Config:
-        env_file = ".env"
+    # Pydantic v2 model configuration
+    model_config = {
+        "env_file": ".env",
+        "extra": "ignore",
+    }
 
 settings = Settings()
