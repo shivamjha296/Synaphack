@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Event } from '../../lib/eventService'
+import RegistrationModal from '../RegistrationModal'
 
 interface User {
   email: string
@@ -17,22 +18,126 @@ const ParticipantDashboard = () => {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [registrationEvent, setRegistrationEvent] = useState<Event | null>(null)
+  const [registeredEvents, setRegisteredEvents] = useState<string[]>([])
+  const [registeredEventsDetails, setRegisteredEventsDetails] = useState<(Event & { registrationData: any })[]>([])
+  const [registeredEventsLoading, setRegisteredEventsLoading] = useState(false)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
     // Check if user is logged in
     const userData = localStorage.getItem('user')
+    console.log('ParticipantDashboard: Raw user data from localStorage:', userData)
     if (userData) {
       const parsedUser = JSON.parse(userData)
+      console.log('ParticipantDashboard: Parsed user:', parsedUser)
       if (parsedUser.role === 'participant') {
         setUser(parsedUser)
+        console.log('ParticipantDashboard: Loading data for participant email:', parsedUser.email)
         loadAvailableEvents()
+        loadUserRegistrations(parsedUser.email)
+        loadRegisteredEventsDetails(parsedUser.email)
       } else {
         router.push('/login')
       }
     } else {
       router.push('/login')
     }
-  }, [router])
+  }, [router, refreshTrigger])
+
+  const loadUserRegistrations = async (email: string) => {
+    try {
+      console.log('Loading user registrations for email:', email)
+      
+      // Use direct Firebase query like the organizer's dashboard
+      const { collection, query, where, getDocs } = await import('firebase/firestore')
+      const { db } = await import('../../lib/firebase')
+      
+      const q = query(
+        collection(db, 'registrations'),
+        where('participantEmail', '==', email)
+      )
+      const registrationsSnap = await getDocs(q)
+      
+      const eventIds = registrationsSnap.docs.map(doc => doc.data().eventId)
+      console.log('Found registrations for events:', eventIds)
+      
+      setRegisteredEvents(eventIds)
+    } catch (error) {
+      console.error('Error loading user registrations:', error)
+    }
+  }
+
+  const loadRegisteredEventsDetails = async (email: string) => {
+    setRegisteredEventsLoading(true)
+    try {
+      console.log('Loading registered events for email:', email)
+      const { eventService } = await import('../../lib/eventService')
+      
+      // Use the same logic as organizer's getEventParticipants but query by participant
+      const { collection, query, where, getDocs, getDoc, doc } = await import('firebase/firestore')
+      const { db } = await import('../../lib/firebase')
+      
+      // Query registrations by participant email
+      const q = query(
+        collection(db, 'registrations'),
+        where('participantEmail', '==', email)
+      )
+      const registrationsSnap = await getDocs(q)
+      
+      console.log('Found registrations:', registrationsSnap.docs.length)
+      
+      const registeredEventsData = []
+      
+      for (const regDoc of registrationsSnap.docs) {
+        const registrationData = regDoc.data()
+        const registration = { 
+          id: regDoc.id, 
+          ...registrationData,
+          registrationDate: registrationData.registrationDate?.toDate(),
+        }
+        
+        console.log('Processing registration:', registration.id, 'for event:', registrationData.eventId)
+        
+        // Get the event details
+        const eventDoc = await getDoc(doc(db, 'events', registrationData.eventId))
+        
+        if (eventDoc.exists()) {
+          const eventData = eventDoc.data()
+          const event = { 
+            id: eventDoc.id, 
+            ...eventData,
+            createdAt: eventData.createdAt?.toDate(),
+            updatedAt: eventData.updatedAt?.toDate(),
+            timeline: {
+              ...eventData.timeline,
+              registrationStart: eventData.timeline?.registrationStart?.toDate(),
+              registrationEnd: eventData.timeline?.registrationEnd?.toDate(),
+              eventStart: eventData.timeline?.eventStart?.toDate(),
+              eventEnd: eventData.timeline?.eventEnd?.toDate(),
+              submissionDeadline: eventData.timeline?.submissionDeadline?.toDate(),
+            }
+          } as any
+          
+          console.log('Found event:', eventData.title)
+          
+          registeredEventsData.push({
+            ...event,
+            registrationData: registration
+          })
+        } else {
+          console.log('Event not found for eventId:', registrationData.eventId)
+        }
+      }
+      
+      console.log('Final registered events:', registeredEventsData.length)
+      setRegisteredEventsDetails(registeredEventsData)
+    } catch (error) {
+      console.error('Error loading registered events details:', error)
+    } finally {
+      setRegisteredEventsLoading(false)
+    }
+  }
 
   const loadAvailableEvents = async () => {
     try {
@@ -50,6 +155,19 @@ const ParticipantDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem('user')
     router.push('/')
+  }
+
+  const handleRegistrationComplete = () => {
+    setRefreshTrigger(prev => prev + 1)
+    alert('Registration successful! You will receive a confirmation email shortly.')
+  }
+
+  const handleRegisterClick = (event: Event) => {
+    setRegistrationEvent(event)
+  }
+
+  const isRegistered = (eventId: string) => {
+    return registeredEvents.includes(eventId)
   }
 
   if (!user) {
@@ -111,7 +229,7 @@ const ParticipantDashboard = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-slate-400">Events Joined</p>
-                <p className="text-2xl font-bold text-slate-100">5</p>
+                <p className="text-2xl font-bold text-slate-100">{registeredEventsDetails.length}</p>
               </div>
             </div>
           </div>
@@ -250,15 +368,101 @@ const ParticipantDashboard = () => {
                         View Details
                       </button>
                       <button 
+                        onClick={() => handleRegisterClick(event)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                           event.status === 'completed'
                             ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                            : isRegistered(event.id!)
+                            ? 'bg-green-600 text-white cursor-default'
                             : 'bg-blue-600 hover:bg-blue-700 text-white'
                         }`}
-                        disabled={event.status === 'completed'}
+                        disabled={event.status === 'completed' || isRegistered(event.id!)}
                       >
-                        {event.status === 'completed' ? 'Event Completed' : 'Register'}
+                        {event.status === 'completed' 
+                          ? 'Event Completed' 
+                          : isRegistered(event.id!)
+                          ? 'Registered ✓' 
+                          : 'Register'
+                        }
                       </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Registered Events */}
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold text-slate-100 mb-4">My Registered Events</h2>
+          
+          {registeredEventsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-slate-400">Loading registered events...</span>
+            </div>
+          ) : registeredEventsDetails.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-slate-700 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                <div className="w-8 h-8 bg-slate-600 rounded"></div>
+              </div>
+              <h3 className="text-lg font-medium text-slate-100 mb-2">No registered events</h3>
+              <p className="text-slate-400">Register for events above to see them here</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {registeredEventsDetails.map((eventWithReg) => (
+                <div key={eventWithReg.id} className="border border-green-600/30 rounded-lg bg-green-900/10 hover:bg-green-800/20 transition-colors duration-200 overflow-hidden shadow-lg">
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-3">
+                      <h3 className="font-semibold text-xl text-slate-100 leading-tight">{eventWithReg.title}</h3>
+                      <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-900/30 text-green-400 border border-green-600">
+                        Registered ✓
+                      </span>
+                    </div>
+                    
+                    <p className="text-sm text-slate-300 mb-4 line-clamp-2">{eventWithReg.description}</p>
+                    
+                    <div className="space-y-3 mb-4">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded-md text-xs font-medium">{eventWithReg.theme}</span>
+                        <span className="px-2 py-1 bg-purple-900/30 text-purple-300 rounded-md text-xs font-medium">{eventWithReg.eventType}</span>
+                      </div>
+                      
+                      <div className="text-sm text-slate-400 space-y-1">
+                        <div className="flex justify-between">
+                          <span>Event Date:</span>
+                          <span className="text-slate-300">{new Date(eventWithReg.timeline.eventStart).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Registered On:</span>
+                          <span className="text-green-400">{new Date(eventWithReg.registrationData.registrationDate).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Status:</span>
+                          <span className={`font-medium ${
+                            eventWithReg.status === 'ongoing' ? 'text-green-400' :
+                            eventWithReg.status === 'completed' ? 'text-slate-400' :
+                            eventWithReg.status === 'published' ? 'text-blue-400' :
+                            'text-yellow-400'
+                          }`}>{eventWithReg.status}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="px-6 py-4 bg-green-900/20 border-t border-green-600/30">
+                    <div className="flex justify-between items-center">
+                      <button 
+                        onClick={() => setSelectedEvent(eventWithReg)}
+                        className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors"
+                      >
+                        View Details
+                      </button>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-xs text-green-400 font-medium">Active Registration</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -398,19 +602,41 @@ const ParticipantDashboard = () => {
                   Close
                 </button>
                 <button 
+                  onClick={() => {
+                    setSelectedEvent(null)
+                    handleRegisterClick(selectedEvent)
+                  }}
                   className={`px-6 py-2 rounded-lg font-medium transition-colors ${
                     selectedEvent.status === 'completed'
                       ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                      : isRegistered(selectedEvent.id!)
+                      ? 'bg-green-600 text-white cursor-default'
                       : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }`}
-                  disabled={selectedEvent.status === 'completed'}
+                  disabled={selectedEvent.status === 'completed' || isRegistered(selectedEvent.id!)}
                 >
-                  {selectedEvent.status === 'completed' ? 'Event Completed' : 'Register for Event'}
+                  {selectedEvent.status === 'completed' 
+                    ? 'Event Completed' 
+                    : isRegistered(selectedEvent.id!)
+                    ? 'Already Registered ✓'
+                    : 'Register for Event'
+                  }
                 </button>
               </div>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Registration Modal */}
+      {registrationEvent && user && (
+        <RegistrationModal
+          event={registrationEvent}
+          userEmail={user.email}
+          userName={user.name}
+          onClose={() => setRegistrationEvent(null)}
+          onRegistrationComplete={handleRegistrationComplete}
+        />
       )}
     </div>
   )

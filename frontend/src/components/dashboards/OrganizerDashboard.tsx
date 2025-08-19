@@ -21,6 +21,9 @@ const OrganizerDashboard = () => {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [eventParticipants, setEventParticipants] = useState<{ [eventId: string]: any[] }>({})
+  const [showParticipants, setShowParticipants] = useState<string | null>(null)
+  const [participantsLoading, setParticipantsLoading] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if user is logged in
@@ -43,10 +46,100 @@ const OrganizerDashboard = () => {
       const { eventService } = await import('../../lib/eventService')
       const allEvents = await eventService.getAllEvents()
       setEvents(allEvents)
+      // Load participant counts for all events
+      for (const event of allEvents) {
+        if (event.id) {
+          loadEventParticipants(event.id)
+        }
+      }
     } catch (error) {
       console.error('Error loading events:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadEventParticipants = async (eventId: string) => {
+    try {
+      const { eventService } = await import('../../lib/eventService')
+      const participants = await eventService.getEventParticipants(eventId)
+      setEventParticipants(prev => ({
+        ...prev,
+        [eventId]: participants
+      }))
+    } catch (error) {
+      console.error('Error loading event participants:', error)
+    }
+  }
+
+  const handleViewParticipants = async (eventId: string) => {
+    setParticipantsLoading(eventId)
+    if (!eventParticipants[eventId]) {
+      await loadEventParticipants(eventId)
+    }
+    setShowParticipants(eventId)
+    setParticipantsLoading(null)
+  }
+
+  const exportParticipantsToCSV = (eventId: string) => {
+    const participants = eventParticipants[eventId] || []
+    const event = events.find(e => e.id === eventId)
+    
+    if (participants.length === 0) {
+      alert('No participants to export')
+      return
+    }
+
+    // Define CSV headers
+    const headers = [
+      'Name', 'Email', 'Phone', 'College', 'Course', 'Year', 'Experience',
+      'Skills', 'GitHub', 'LinkedIn', 'Portfolio', 'Bio',
+      'Team Name', 'Team Members', 'Registration Date', 'Status', 'Payment Status'
+    ]
+
+    // Convert participants to CSV rows
+    const csvRows = [
+      headers.join(','), // Header row
+      ...participants.map(participant => {
+        const skills = (participant.participantSkills || participant.userProfile?.skills || []).join(';')
+        const teamMembers = participant.teamMembers ? 
+          participant.teamMembers.map((m: any) => `${m.name} (${m.email})`).join(';') : ''
+        
+        return [
+          `"${participant.userProfile?.name || participant.participantName || ''}"`,
+          `"${participant.participantEmail || ''}"`,
+          `"${participant.participantPhone || participant.userProfile?.phone || ''}"`,
+          `"${participant.participantCollege || participant.userProfile?.college || ''}"`,
+          `"${participant.participantCourse || participant.userProfile?.course || ''}"`,
+          `"${participant.participantYear || participant.userProfile?.year || ''}"`,
+          `"${participant.participantExperience || participant.userProfile?.experience || ''}"`,
+          `"${skills}"`,
+          `"${participant.participantGithub || participant.userProfile?.github || ''}"`,
+          `"${participant.participantLinkedin || participant.userProfile?.linkedin || ''}"`,
+          `"${participant.participantPortfolio || participant.userProfile?.portfolio || ''}"`,
+          `"${participant.participantBio || participant.userProfile?.bio || ''}"`,
+          `"${participant.teamName || ''}"`,
+          `"${teamMembers}"`,
+          `"${new Date(participant.registrationDate).toLocaleDateString()}"`,
+          `"${participant.status}"`,
+          `"${participant.paymentStatus}"`
+        ].join(',')
+      })
+    ]
+
+    // Create and download CSV file
+    const csvContent = csvRows.join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `${event?.title.replace(/[^a-z0-9]/gi, '_')}_participants_${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     }
   }
 
@@ -292,8 +385,10 @@ const OrganizerDashboard = () => {
                       
                       <div className="text-sm text-slate-400 space-y-1">
                         <div className="flex justify-between">
-                          <span>Participants:</span>
-                          <span className="text-slate-300 font-medium">{event.maxParticipants}</span>
+                          <span>Registered:</span>
+                          <span className="text-slate-300 font-medium">
+                            {eventParticipants[event.id!]?.length || 0} / {event.maxParticipants}
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Event Date:</span>
@@ -308,16 +403,25 @@ const OrganizerDashboard = () => {
                   </div>
                   <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-700">
                     <div className="flex justify-between items-center">
-                      <button 
-                        onClick={() => setSelectedEvent(event)}
-                        className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
-                      >
-                        View Details
-                      </button>
+                      <div className="flex space-x-3">
+                        <button 
+                          onClick={() => setSelectedEvent(event)}
+                          className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                        >
+                          Details
+                        </button>
+                        <button 
+                          onClick={() => handleViewParticipants(event.id!)}
+                          className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors"
+                          disabled={participantsLoading === event.id}
+                        >
+                          {participantsLoading === event.id ? 'Loading...' : `Participants (${eventParticipants[event.id!]?.length || 0})`}
+                        </button>
+                      </div>
                       <div className="flex space-x-2">
                         <button 
                           onClick={() => handleEditEvent(event)}
-                          className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors"
+                          className="text-yellow-400 hover:text-yellow-300 text-sm font-medium transition-colors"
                         >
                           Edit
                         </button>
@@ -495,6 +599,411 @@ const OrganizerDashboard = () => {
                     className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                   >
                     Edit Event
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Participants Modal */}
+        {showParticipants && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-700">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-slate-700">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-slate-100">Event Participants</h2>
+                  <p className="text-slate-400 mt-1">
+                    {events.find(e => e.id === showParticipants)?.title}
+                  </p>
+                  
+                  {/* Participant Statistics */}
+                  <div className="flex items-center space-x-6 mt-3">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="text-sm text-slate-300">
+                        {eventParticipants[showParticipants]?.length || 0} Total Participants
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                      <span className="text-sm text-slate-300">
+                        {eventParticipants[showParticipants]?.filter(p => p.teamName).length || 0} Team Participants
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm text-slate-300">
+                        {eventParticipants[showParticipants]?.filter(p => !p.teamName).length || 0} Individual Participants
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowParticipants(null)}
+                  className="p-2 text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Participants List */}
+              <div className="p-6">
+                {eventParticipants[showParticipants]?.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-slate-700 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                      <div className="w-8 h-8 bg-slate-600 rounded"></div>
+                    </div>
+                    <h3 className="text-lg font-medium text-slate-100 mb-2">No participants yet</h3>
+                    <p className="text-slate-400">Participants will appear here once they register for this event</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {eventParticipants[showParticipants]?.map((participant, index) => (
+                      <div key={participant.id} className="border border-slate-700 rounded-lg bg-slate-800/50 overflow-hidden">
+                        {/* Participant Header */}
+                        <div className="flex items-center justify-between p-4 bg-slate-700/30 border-b border-slate-600">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                              <span className="text-white font-bold text-lg">
+                                {participant.userProfile?.name ? participant.userProfile.name[0].toUpperCase() : participant.participantName[0].toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-slate-100 text-lg">
+                                {participant.userProfile?.name || participant.participantName}
+                              </h4>
+                              <p className="text-sm text-slate-400">{participant.participantEmail}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="text-right">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-900/30 text-green-400 border border-green-600">
+                              Registered
+                            </span>
+                            <p className="text-xs text-slate-400 mt-1">
+                              {new Date(participant.registrationDate).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="p-6">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Personal Information */}
+                            <div className="space-y-4">
+                              <h5 className="text-lg font-semibold text-slate-100 border-b border-slate-600 pb-2">
+                                Personal Information
+                              </h5>
+                              
+                              <div className="space-y-3">
+                                {/* Show participant data from registration or profile */}
+                                {(participant.participantPhone || participant.userProfile?.phone) && (
+                                  <div className="flex justify-between">
+                                    <span className="text-slate-400">Phone:</span>
+                                    <span className="text-slate-300">{participant.participantPhone || participant.userProfile?.phone}</span>
+                                  </div>
+                                )}
+                                
+                                {(participant.participantCollege || participant.userProfile?.college) && (
+                                  <div className="flex justify-between">
+                                    <span className="text-slate-400">College:</span>
+                                    <span className="text-slate-300">{participant.participantCollege || participant.userProfile?.college}</span>
+                                  </div>
+                                )}
+                                
+                                {(participant.participantCourse || participant.userProfile?.course) && (
+                                  <div className="flex justify-between">
+                                    <span className="text-slate-400">Course:</span>
+                                    <span className="text-slate-300">{participant.participantCourse || participant.userProfile?.course}</span>
+                                  </div>
+                                )}
+                                
+                                {(participant.participantYear || participant.userProfile?.year) && (
+                                  <div className="flex justify-between">
+                                    <span className="text-slate-400">Year:</span>
+                                    <span className="text-slate-300">{participant.participantYear || participant.userProfile?.year}</span>
+                                  </div>
+                                )}
+                                
+                                {(participant.participantExperience || participant.userProfile?.experience) && (
+                                  <div>
+                                    <span className="text-slate-400 block mb-1">Experience:</span>
+                                    <span className="text-slate-300 text-sm">{participant.participantExperience || participant.userProfile?.experience}</span>
+                                  </div>
+                                )}
+                                
+                                {(participant.participantBio || participant.userProfile?.bio) && (
+                                  <div>
+                                    <span className="text-slate-400 block mb-1">Bio:</span>
+                                    <p className="text-slate-300 text-sm leading-relaxed">{participant.participantBio || participant.userProfile?.bio}</p>
+                                  </div>
+                                )}
+                                
+                                {/* Social Links */}
+                                {((participant.participantGithub || participant.userProfile?.github) || 
+                                  (participant.participantLinkedin || participant.userProfile?.linkedin) || 
+                                  (participant.participantPortfolio || participant.userProfile?.portfolio)) && (
+                                  <div>
+                                    <span className="text-slate-400 block mb-2">Social Links:</span>
+                                    <div className="space-y-2">
+                                      {(participant.participantGithub || participant.userProfile?.github) && (
+                                        <div className="flex justify-between">
+                                          <span className="text-slate-400">GitHub:</span>
+                                          <a 
+                                            href={participant.participantGithub || participant.userProfile?.github} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-blue-400 hover:text-blue-300 text-sm truncate max-w-48"
+                                          >
+                                            {participant.participantGithub || participant.userProfile?.github}
+                                          </a>
+                                        </div>
+                                      )}
+                                      
+                                      {(participant.participantLinkedin || participant.userProfile?.linkedin) && (
+                                        <div className="flex justify-between">
+                                          <span className="text-slate-400">LinkedIn:</span>
+                                          <a 
+                                            href={participant.participantLinkedin || participant.userProfile?.linkedin} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-blue-400 hover:text-blue-300 text-sm truncate max-w-48"
+                                          >
+                                            {participant.participantLinkedin || participant.userProfile?.linkedin}
+                                          </a>
+                                        </div>
+                                      )}
+                                      
+                                      {(participant.participantPortfolio || participant.userProfile?.portfolio) && (
+                                        <div className="flex justify-between">
+                                          <span className="text-slate-400">Portfolio:</span>
+                                          <a 
+                                            href={participant.participantPortfolio || participant.userProfile?.portfolio} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-blue-400 hover:text-blue-300 text-sm truncate max-w-48"
+                                          >
+                                            {participant.participantPortfolio || participant.userProfile?.portfolio}
+                                          </a>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* If no data is available */}
+                                {!participant.participantPhone && !participant.userProfile?.phone &&
+                                 !participant.participantCollege && !participant.userProfile?.college &&
+                                 !participant.participantCourse && !participant.userProfile?.course && (
+                                  <div className="text-center py-4">
+                                    <p className="text-slate-400 text-sm">No personal information available</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Skills & Team Information */}
+                            <div className="space-y-4">
+                              <h5 className="text-lg font-semibold text-slate-100 border-b border-slate-600 pb-2">
+                                Skills & Team
+                              </h5>
+                              
+                              {/* Skills */}
+                              {((participant.participantSkills && participant.participantSkills.length > 0) || 
+                                (participant.userProfile?.skills && participant.userProfile.skills.length > 0)) && (
+                                <div>
+                                  <span className="text-slate-400 block mb-2">Skills:</span>
+                                  <div className="flex flex-wrap gap-2">
+                                    {(participant.participantSkills || participant.userProfile?.skills || []).map((skill: string, skillIndex: number) => (
+                                      <span key={skillIndex} className="px-3 py-1 bg-blue-900/30 text-blue-300 rounded-full text-sm border border-blue-600/30">
+                                        {skill}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Social Links */}
+                              {(participant.userProfile?.github || participant.userProfile?.linkedin || participant.userProfile?.portfolio) && (
+                                <div>
+                                  <span className="text-slate-400 block mb-2">Links:</span>
+                                  <div className="space-y-2">
+                                    {participant.userProfile.github && (
+                                      <div className="flex items-center space-x-2">
+                                        <span className="text-slate-400 text-sm">GitHub:</span>
+                                        <a 
+                                          href={participant.userProfile.github}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-400 hover:text-blue-300 text-sm underline"
+                                        >
+                                          {participant.userProfile.github}
+                                        </a>
+                                      </div>
+                                    )}
+                                    
+                                    {participant.userProfile.linkedin && (
+                                      <div className="flex items-center space-x-2">
+                                        <span className="text-slate-400 text-sm">LinkedIn:</span>
+                                        <a 
+                                          href={participant.userProfile.linkedin}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-400 hover:text-blue-300 text-sm underline"
+                                        >
+                                          {participant.userProfile.linkedin}
+                                        </a>
+                                      </div>
+                                    )}
+                                    
+                                    {participant.userProfile.portfolio && (
+                                      <div className="flex items-center space-x-2">
+                                        <span className="text-slate-400 text-sm">Portfolio:</span>
+                                        <a 
+                                          href={participant.userProfile.portfolio}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-400 hover:text-blue-300 text-sm underline"
+                                        >
+                                          {participant.userProfile.portfolio}
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Team Information */}
+                            <div className="space-y-4">
+                              <h5 className="text-lg font-semibold text-slate-100 border-b border-slate-600 pb-2">
+                                Team Information
+                              </h5>
+                              
+                              {participant.teamName ? (
+                                <div className="space-y-4">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Team Name:</span>
+                                    <span className="text-slate-100 font-medium">{participant.teamName}</span>
+                                  </div>
+                                  
+                                  {participant.teamMembers && participant.teamMembers.length > 0 && (
+                                    <div>
+                                      <span className="text-slate-400 block mb-3">Team Members ({participant.teamMembers.length}):</span>
+                                      <div className="space-y-3">
+                                        {participant.teamMembers.map((member: any, memberIndex: number) => (
+                                          <div key={memberIndex} className="flex items-center space-x-3 p-3 bg-slate-700/50 rounded-lg border border-slate-600">
+                                            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                                              <span className="text-white font-medium text-sm">
+                                                {member.name[0].toUpperCase()}
+                                              </span>
+                                            </div>
+                                            <div className="flex-1">
+                                              <p className="text-slate-100 font-medium">{member.name}</p>
+                                              <p className="text-slate-400 text-sm">{member.email}</p>
+                                              {member.role && (
+                                                <span className="inline-block mt-1 px-2 py-1 bg-purple-900/30 text-purple-300 rounded-md text-xs">
+                                                  {member.role}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-center py-6 border-2 border-dashed border-slate-600 rounded-lg">
+                                  <div className="text-slate-400">
+                                    <div className="w-12 h-12 bg-slate-700 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                                      <div className="w-6 h-6 bg-slate-600 rounded"></div>
+                                    </div>
+                                    <p className="text-sm">Individual Participant</p>
+                                    <p className="text-xs text-slate-500">No team information provided</p>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Registration Status & Payment */}
+                              <div>
+                                <span className="text-slate-400 block mb-2">Registration Details:</span>
+                                <div className="space-y-2 bg-slate-700/30 rounded-lg p-3">
+                                  <div className="flex justify-between">
+                                    <span className="text-slate-400 text-sm">Status:</span>
+                                    <span className={`text-sm font-medium px-2 py-1 rounded-md ${
+                                      participant.status === 'approved' ? 'bg-green-900/30 text-green-400' :
+                                      participant.status === 'rejected' ? 'bg-red-900/30 text-red-400' :
+                                      'bg-yellow-900/30 text-yellow-400'
+                                    }`}>
+                                      {participant.status.charAt(0).toUpperCase() + participant.status.slice(1)}
+                                    </span>
+                                  </div>
+                                  
+                                  <div className="flex justify-between">
+                                    <span className="text-slate-400 text-sm">Payment:</span>
+                                    <span className={`text-sm font-medium px-2 py-1 rounded-md ${
+                                      participant.paymentStatus === 'paid' ? 'bg-green-900/30 text-green-400' :
+                                      participant.paymentStatus === 'failed' ? 'bg-red-900/30 text-red-400' :
+                                      'bg-yellow-900/30 text-yellow-400'
+                                    }`}>
+                                      {participant.paymentStatus.charAt(0).toUpperCase() + participant.paymentStatus.slice(1)}
+                                    </span>
+                                  </div>
+                                  
+                                  <div className="flex justify-between">
+                                    <span className="text-slate-400 text-sm">Registered:</span>
+                                    <span className="text-slate-300 text-sm">
+                                      {new Date(participant.registrationDate).toLocaleString()}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Additional Information */}
+                              {participant.additionalInfo && Object.keys(participant.additionalInfo).length > 0 && (
+                                <div>
+                                  <span className="text-slate-400 block mb-2">Additional Information:</span>
+                                  <div className="bg-slate-700/30 rounded-lg p-3 space-y-2">
+                                    {Object.entries(participant.additionalInfo).map(([key, value]) => (
+                                      <div key={key} className="flex justify-between text-sm">
+                                        <span className="text-slate-400 capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
+                                        <span className="text-slate-300 flex-1 text-right ml-2">{String(value)}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex justify-between items-center p-6 border-t border-slate-700 bg-slate-800/50">
+                <div className="text-sm text-slate-400">
+                  Last updated: {new Date().toLocaleString()}
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => exportParticipantsToCSV(showParticipants!)}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+                    disabled={!eventParticipants[showParticipants!] || eventParticipants[showParticipants!].length === 0}
+                  >
+                    Export CSV
+                  </button>
+                  <button
+                    onClick={() => setShowParticipants(null)}
+                    className="px-6 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors"
+                  >
+                    Close
                   </button>
                 </div>
               </div>
