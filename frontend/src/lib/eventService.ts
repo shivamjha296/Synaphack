@@ -184,17 +184,35 @@ export const eventService = {
   async getEventsByOrganizer(organizerId: string): Promise<Event[]> {
     try {
       console.log('Getting events for organizer:', organizerId)
+      
+      // First try to get events with organizerId
       const q = query(
         collection(db, EVENTS_COLLECTION), 
-        where('organizerId', '==', organizerId),
-        orderBy('createdAt', 'desc')
+        where('organizerId', '==', organizerId)
       )
       const querySnapshot = await getDocs(q)
-      console.log('Found events:', querySnapshot.size)
+      console.log('Found events with organizerId:', querySnapshot.size)
       
-      return querySnapshot.docs.map(doc => {
+      // If no events found with organizerId, try with organizerName for backward compatibility
+      let results = querySnapshot.docs
+      if (results.length === 0) {
+        console.log('No events found with organizerId, trying with organizerName')
+        const qByName = query(
+          collection(db, EVENTS_COLLECTION)
+        )
+        const allEventsSnapshot = await getDocs(qByName)
+        console.log('Total events in database:', allEventsSnapshot.size)
+        
+        // For debugging, let's see all events
+        allEventsSnapshot.docs.forEach(doc => {
+          const data = doc.data()
+          console.log('Event:', data.title, 'organizerId:', data.organizerId, 'organizerName:', data.organizerName)
+        })
+      }
+      
+      const events = results.map(doc => {
         const data = doc.data()
-        console.log('Event data:', data)
+        console.log('Event data:', data.title, 'organizerId:', data.organizerId)
         return {
           id: doc.id,
           ...data,
@@ -210,6 +228,13 @@ export const eventService = {
           }
         }
       }) as Event[]
+      
+      // Sort by createdAt descending (newest first)
+      return events.sort((a, b) => {
+        const dateA = a.createdAt || new Date(0)
+        const dateB = b.createdAt || new Date(0)
+        return dateB.getTime() - dateA.getTime()
+      })
     } catch (error) {
       console.error('Error getting events by organizer:', error)
       throw error
@@ -220,29 +245,54 @@ export const eventService = {
   async getPublishedEvents(): Promise<Event[]> {
     try {
       console.log('Getting published events...')
-      const q = query(
+      // First try to get events with published/ongoing status
+      const qWithStatus = query(
         collection(db, EVENTS_COLLECTION), 
-        where('status', 'in', ['published', 'ongoing']),
-        orderBy('createdAt', 'desc')
+        where('status', 'in', ['published', 'ongoing'])
       )
-      const querySnapshot = await getDocs(q)
-      console.log('Found published events:', querySnapshot.size)
+      const withStatusSnap = await getDocs(qWithStatus)
+      console.log('Found events with status:', withStatusSnap.size)
       
-      return querySnapshot.docs.map(doc => {
+      // Also get events without status field (backward compatibility)
+      const allEventsQuery = query(collection(db, EVENTS_COLLECTION))
+      const allEventsSnap = await getDocs(allEventsQuery)
+      console.log('Total events in database:', allEventsSnap.size)
+      
+      const eventsWithStatus = withStatusSnap.docs.map(doc => {
         const data = doc.data()
-        console.log('Published event data:', data)
         return {
           id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate(),
-          updatedAt: data.updatedAt?.toDate(),
+          ...data
+        }
+      })
+      
+      const eventsWithoutStatus = allEventsSnap.docs
+        .filter(doc => !doc.data().status) // Only events without status field
+        .map(doc => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            ...data,
+            status: 'published' // Default to published for backward compatibility
+          }
+        })
+      
+      const allPublishedEvents = [...eventsWithStatus, ...eventsWithoutStatus]
+      console.log('Combined published events:', allPublishedEvents.length)
+      
+      return allPublishedEvents.map(eventData => {
+        console.log('Published event data:', (eventData as any).title, 'status:', (eventData as any).status)
+        return {
+          ...eventData,
+          createdAt: (eventData as any).createdAt?.toDate(),
+          updatedAt: (eventData as any).updatedAt?.toDate(),
           timeline: {
-            ...data.timeline,
-            registrationStart: data.timeline?.registrationStart?.toDate(),
-            registrationEnd: data.timeline?.registrationEnd?.toDate(),
-            eventStart: data.timeline?.eventStart?.toDate(),
-            eventEnd: data.timeline?.eventEnd?.toDate(),
-            submissionDeadline: data.timeline?.submissionDeadline?.toDate(),
+            ...(eventData as any).timeline,
+            registrationStart: (eventData as any).timeline?.registrationStart?.toDate(),
+            registrationEnd: (eventData as any).timeline?.registrationEnd?.toDate(),
+            eventStart: (eventData as any).timeline?.eventStart?.toDate(),
+            eventEnd: (eventData as any).timeline?.eventEnd?.toDate(),
+            submissionDeadline: (eventData as any).timeline?.submissionDeadline?.toDate(),
           }
         }
       }) as Event[]

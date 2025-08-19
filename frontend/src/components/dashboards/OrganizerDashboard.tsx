@@ -74,12 +74,22 @@ const OrganizerDashboard = () => {
   const loadEvents = async () => {
     if (!user) return
     
+    console.log('OrganizerDashboard: Loading events for user:', user)
+    console.log('OrganizerDashboard: Using organizerId:', user.uid || user.email)
+    
     try {
       const { eventService } = await import('../../lib/eventService')
+      // Only load events created by this organizer
+      const organizerEvents = await eventService.getEventsByOrganizer(user.uid || user.email)
+      console.log('OrganizerDashboard: Loaded events:', organizerEvents.length)
+      
+      // TEMPORARY: Also load all events to see if there are any events at all
       const allEvents = await eventService.getAllEvents()
-      setEvents(allEvents)
-      // Load participant counts for all events
-      for (const event of allEvents) {
+      console.log('OrganizerDashboard: Total events in database:', allEvents.length)
+      
+      setEvents(organizerEvents)
+      // Load participant counts for organizer's events only
+      for (const event of organizerEvents) {
         if (event.id) {
           loadEventParticipants(event.id)
         }

@@ -161,10 +161,12 @@ const ParticipantDashboard = () => {
   }
 
   const loadAvailableEvents = async () => {
+    console.log('ParticipantDashboard: Loading available events...')
     try {
       const { eventService } = await import('../../lib/eventService')
       // Show only published events for participants (not drafts)
       const publishedEvents = await eventService.getPublishedEvents()
+      console.log('ParticipantDashboard: Loaded events:', publishedEvents.length)
       setEvents(publishedEvents)
     } catch (error) {
       console.error('Error loading events:', error)
