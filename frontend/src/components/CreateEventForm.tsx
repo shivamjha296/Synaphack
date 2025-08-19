@@ -46,6 +46,26 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
   // Initialize form data for editing
   useEffect(() => {
     if (editingEvent) {
+      // Helper function to safely convert date
+      const safeToDateString = (dateValue: any) => {
+        if (!dateValue) return ''
+        
+        try {
+          // If it's a Firestore Timestamp, convert to date
+          if (dateValue && typeof dateValue.toDate === 'function') {
+            return dateValue.toDate().toISOString().slice(0, 16)
+          }
+          // If it's already a Date object or date string
+          const date = new Date(dateValue)
+          if (!isNaN(date.getTime())) {
+            return date.toISOString().slice(0, 16)
+          }
+        } catch (error) {
+          console.warn('Invalid date value:', dateValue, error)
+        }
+        return ''
+      }
+
       setFormData({
         title: editingEvent.title,
         description: editingEvent.description,
@@ -55,11 +75,11 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
         maxParticipants: editingEvent.maxParticipants,
         registrationFee: editingEvent.registrationFee,
         timeline: {
-          registrationStart: new Date(editingEvent.timeline.registrationStart).toISOString().slice(0, 16),
-          registrationEnd: new Date(editingEvent.timeline.registrationEnd).toISOString().slice(0, 16),
-          eventStart: new Date(editingEvent.timeline.eventStart).toISOString().slice(0, 16),
-          eventEnd: new Date(editingEvent.timeline.eventEnd).toISOString().slice(0, 16),
-          submissionDeadline: new Date(editingEvent.timeline.submissionDeadline).toISOString().slice(0, 16)
+          registrationStart: safeToDateString(editingEvent.timeline.registrationStart),
+          registrationEnd: safeToDateString(editingEvent.timeline.registrationEnd),
+          eventStart: safeToDateString(editingEvent.timeline.eventStart),
+          eventEnd: safeToDateString(editingEvent.timeline.eventEnd),
+          submissionDeadline: safeToDateString(editingEvent.timeline.submissionDeadline)
         },
         contactEmail: editingEvent.contactEmail,
         status: editingEvent.status,
@@ -71,16 +91,16 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
         sponsors: editingEvent.sponsors || [],
         judgingCriteria: editingEvent.judgingCriteria || [],
         rounds: editingEvent.rounds?.map(round => ({
-          id: round.id,
-          name: round.name,
-          description: round.description,
-          startDate: new Date(round.startDate).toISOString().slice(0, 16),
-          endDate: new Date(round.endDate).toISOString().slice(0, 16),
-          submissionDeadline: new Date(round.submissionDeadline).toISOString().slice(0, 16),
-          requirements: round.requirements,
-          maxParticipants: round.maxParticipants?.toString() || '',
-          eliminationCriteria: round.eliminationCriteria || ''
-        })) || []
+            id: round.id,
+            name: round.name,
+            description: round.description,
+            startDate: safeToDateString(round.startDate),
+            endDate: safeToDateString(round.endDate),
+            submissionDeadline: safeToDateString(round.submissionDeadline),
+            requirements: round.requirements,
+            maxParticipants: round.maxParticipants?.toString() || '',
+            eliminationCriteria: round.eliminationCriteria || ''
+          })) || []
       })
     }
   }, [editingEvent])

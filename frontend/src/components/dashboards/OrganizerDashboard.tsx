@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import CreateEventForm from '../CreateEventForm'
 import EventCommunication from '../EventCommunication'
+import SubmissionViewer from '../SubmissionViewer'
 import { Event } from '../../lib/eventService'
 
 interface User {
@@ -27,6 +28,7 @@ const OrganizerDashboard = () => {
   const [showParticipants, setShowParticipants] = useState<string | null>(null)
   const [participantsLoading, setParticipantsLoading] = useState<string | null>(null)
   const [showCommunication, setShowCommunication] = useState<string | null>(null)
+  const [showSubmissions, setShowSubmissions] = useState<Event | null>(null)
 
   useEffect(() => {
     // Check if user is logged in and ensure Firebase auth state
@@ -424,20 +426,22 @@ const OrganizerDashboard = () => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
               {events.map((event) => (
                 <div key={event.id} className="border border-slate-700 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors duration-200 overflow-hidden shadow-lg">
                   <div className="p-6">
-                    <div className="flex justify-between items-start mb-3">
-                      <h3 className="font-semibold text-xl text-slate-100 leading-tight">{event.title}</h3>
-                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                        event.status === 'ongoing' ? 'bg-green-900/30 text-green-400 border border-green-600' :
-                        event.status === 'completed' ? 'bg-slate-700 text-slate-300 border border-slate-600' :
-                        event.status === 'published' ? 'bg-blue-900/30 text-blue-400 border border-blue-600' :
-                        'bg-yellow-900/30 text-yellow-400 border border-yellow-600'
-                      }`}>
-                        {event.status}
-                      </span>
+                    <div className="mb-3">
+                      <h3 className="font-semibold text-xl text-slate-100 leading-tight mb-2">{event.title}</h3>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-400">
+                          Created: {new Date(event.createdAt).toLocaleDateString()}
+                        </span>
+                        {event.rounds && event.rounds.length > 0 && (
+                          <span className="px-2 py-1 bg-orange-900/30 text-orange-300 rounded text-xs font-medium">
+                            {event.rounds.length} Rounds
+                          </span>
+                        )}
+                      </div>
                     </div>
                     
                     <p className="text-sm text-slate-300 mb-4 line-clamp-2">{event.description}</p>
@@ -446,6 +450,9 @@ const OrganizerDashboard = () => {
                       <div className="flex flex-wrap gap-2">
                         <span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded-md text-xs font-medium">{event.theme}</span>
                         <span className="px-2 py-1 bg-purple-900/30 text-purple-300 rounded-md text-xs font-medium">{event.eventType}</span>
+                        {event.registrationFee === 0 && (
+                          <span className="px-2 py-1 bg-green-900/30 text-green-300 rounded-md text-xs font-medium">Free</span>
+                        )}
                       </div>
                       
                       <div className="text-sm text-slate-400 space-y-1">
@@ -459,49 +466,93 @@ const OrganizerDashboard = () => {
                           <span>Event Date:</span>
                           <span className="text-slate-300">{new Date(event.timeline.eventStart).toLocaleDateString()}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Registration Fee:</span>
-                          <span className="text-slate-300 font-medium">₹{event.registrationFee}</span>
-                        </div>
+                        {event.registrationFee > 0 && (
+                          <div className="flex justify-between">
+                            <span>Registration Fee:</span>
+                            <span className="text-slate-300 font-medium">₹{event.registrationFee}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-700">
-                    <div className="flex justify-between items-center">
-                      <div className="flex space-x-3">
+                    <div className="space-y-3">
+                      {/* First Row - View/Info Actions */}
+                      <div className="flex flex-wrap gap-2">
                         <button 
                           onClick={() => setSelectedEvent(event)}
-                          className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                          className="flex items-center space-x-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
                         >
-                          Details
+                          <span>📋</span>
+                          <span>View Details</span>
                         </button>
                         <button 
                           onClick={() => handleViewParticipants(event.id!)}
-                          className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors"
+                          className="flex items-center space-x-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
                           disabled={participantsLoading === event.id}
                         >
-                          {participantsLoading === event.id ? 'Loading...' : `Participants (${eventParticipants[event.id!]?.length || 0})`}
+                          <span>👥</span>
+                          <span>
+                            {participantsLoading === event.id 
+                              ? 'Loading...' 
+                              : `Participants (${eventParticipants[event.id!]?.length || 0})`
+                            }
+                          </span>
+                        </button>
+                        <button 
+                          onClick={() => setShowSubmissions(event)}
+                          className="flex items-center space-x-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors"
+                        >
+                          <span>📝</span>
+                          <span>Submissions</span>
                         </button>
                         <button 
                           onClick={() => handleInitializeCommunication(event.id!)}
-                          className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+                          className="flex items-center space-x-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm font-medium transition-colors"
                         >
-                          💬 Communication
+                          <span>💬</span>
+                          <span>Chat</span>
                         </button>
                       </div>
-                      <div className="flex space-x-2">
-                        <button 
-                          onClick={() => handleEditEvent(event)}
-                          className="text-yellow-400 hover:text-yellow-300 text-sm font-medium transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          onClick={() => setShowDeleteConfirm(event.id || '')}
-                          className="text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
-                        >
-                          Delete
-                        </button>
+                      
+                      {/* Second Row - Edit/Management Actions */}
+                      <div className="flex justify-between items-center">
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleEditEvent(event)}
+                            className="flex items-center space-x-2 px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-md text-sm font-medium transition-colors"
+                          >
+                            <span>✏️</span>
+                            <span>Edit Event</span>
+                          </button>
+                          <button 
+                            onClick={() => setShowDeleteConfirm(event.id || '')}
+                            className="flex items-center space-x-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md text-sm font-medium transition-colors"
+                          >
+                            <span>🗑️</span>
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                        
+                        {/* Event Status Indicator */}
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-2 h-2 rounded-full ${
+                            event.status === 'ongoing' ? 'bg-green-400' :
+                            event.status === 'completed' ? 'bg-gray-400' :
+                            event.status === 'published' ? 'bg-blue-400' :
+                            event.status === 'draft' ? 'bg-yellow-400' :
+                            'bg-red-400'
+                          }`}></div>
+                          <span className={`text-xs font-medium capitalize ${
+                            event.status === 'ongoing' ? 'text-green-400' :
+                            event.status === 'completed' ? 'text-gray-400' :
+                            event.status === 'published' ? 'text-blue-400' :
+                            event.status === 'draft' ? 'text-yellow-400' :
+                            'text-red-400'
+                          }`}>
+                            {event.status}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1138,6 +1189,14 @@ const OrganizerDashboard = () => {
             userName={user.name}
             userRole="organizer"
             onClose={() => setShowCommunication(null)}
+          />
+        )}
+
+        {/* Submissions Viewer Modal */}
+        {showSubmissions && (
+          <SubmissionViewer
+            event={showSubmissions}
+            onClose={() => setShowSubmissions(null)}
           />
         )}
       </div>

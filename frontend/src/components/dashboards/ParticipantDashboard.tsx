@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Event } from '../../lib/eventService'
+import { submissionService, RoundSubmission } from '../../lib/submissionService'
 import RegistrationModal from '../RegistrationModal'
 import EventCommunication from '../EventCommunication'
+import SubmissionForm from '../SubmissionForm'
 
 interface User {
   email: string
@@ -25,6 +27,11 @@ const ParticipantDashboard = () => {
   const [registeredEventsLoading, setRegisteredEventsLoading] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [showCommunication, setShowCommunication] = useState<string | null>(null)
+  
+  // Submission-related state
+  const [submissionForm, setSubmissionForm] = useState<{event: Event, round: any} | null>(null)
+  const [userSubmissions, setUserSubmissions] = useState<{ [eventId: string]: RoundSubmission[] }>({})
+  const [submissionsLoading, setSubmissionsLoading] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if user is logged in and ensure Firebase auth state
@@ -46,6 +53,15 @@ const ParticipantDashboard = () => {
       router.push('/login')
     }
   }, [router, refreshTrigger])
+
+  // Load submissions for registered events
+  useEffect(() => {
+    if (registeredEventsDetails.length > 0) {
+      registeredEventsDetails.forEach(event => {
+        loadUserSubmissions(event.id!)
+      })
+    }
+  }, [registeredEventsDetails, user])
 
   const loadUserRegistrations = async (email: string) => {
     try {
@@ -175,6 +191,48 @@ const ParticipantDashboard = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadUserSubmissions = async (eventId: string) => {
+    if (!user) return
+    
+    setSubmissionsLoading(eventId)
+    try {
+      const submissions = await submissionService.getParticipantSubmissions(eventId, user.email)
+      setUserSubmissions(prev => ({
+        ...prev,
+        [eventId]: submissions
+      }))
+    } catch (error) {
+      console.error('Error loading user submissions:', error)
+    } finally {
+      setSubmissionsLoading(null)
+    }
+  }
+
+  const handleSubmissionComplete = (eventId: string) => {
+    // Reload submissions for this event
+    loadUserSubmissions(eventId)
+    setSubmissionForm(null)
+  }
+
+  const openSubmissionForm = (event: Event, round: any) => {
+    setSubmissionForm({ event, round })
+  }
+
+  const getSubmissionForRound = (eventId: string, roundId: string): RoundSubmission | undefined => {
+    const eventSubmissions = userSubmissions[eventId] || []
+    return eventSubmissions.find(s => s.roundId === roundId)
+  }
+
+  const isSubmissionDeadlinePassed = (deadline: Date): boolean => {
+    return new Date() > deadline
+  }
+
+  const getSubmissionStatus = (eventId: string, roundId: string) => {
+    const submission = getSubmissionForRound(eventId, roundId)
+    if (!submission) return 'not_submitted'
+    return submission.status
   }
 
   const handleLogout = async () => {
@@ -495,6 +553,149 @@ const ParticipantDashboard = () => {
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Rounds and Submissions Section */}
+                  {eventWithReg.rounds && eventWithReg.rounds.length > 0 && (
+                    <div className="px-6 py-4 border-t border-green-600/30 bg-green-900/10">
+                      <h4 className="text-sm font-semibold text-slate-100 mb-3">Hackathon Rounds & Submissions</h4>
+                      <div className="space-y-3">
+                        {eventWithReg.rounds.map((round: any, index: number) => {
+                          const submission = getSubmissionForRound(eventWithReg.id!, round.id)
+                          const isDeadlinePassed = isSubmissionDeadlinePassed(new Date(round.submissionDeadline))
+                          const status = getSubmissionStatus(eventWithReg.id!, round.id)
+                          
+                          return (
+                            <div key={round.id} className="bg-slate-800/50 rounded-lg p-3 border border-slate-600">
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <h5 className="font-medium text-slate-100">Round {index + 1}: {round.name}</h5>
+                                  <p className="text-xs text-slate-400 mt-1">
+                                    Deadline: {new Date(round.submissionDeadline).toLocaleString()}
+                                  </p>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {status === 'not_submitted' && (
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                      isDeadlinePassed ? 'bg-red-900/30 text-red-400' : 'bg-yellow-900/30 text-yellow-400'
+                                    }`}>
+                                      {isDeadlinePassed ? 'Missed' : 'Pending'}
+                                    </span>
+                                  )}
+                                  {status === 'submitted' && (
+                                    <span className="px-2 py-1 bg-green-900/30 text-green-400 rounded text-xs font-medium">
+                                      Submitted ✓
+                                    </span>
+                                  )}
+                                  {status === 'late' && (
+                                    <span className="px-2 py-1 bg-yellow-900/30 text-yellow-400 rounded text-xs font-medium">
+                                      Late ⚠️
+                                    </span>
+                                  )}
+                                  {status === 'reviewed' && (
+                                    <span className="px-2 py-1 bg-blue-900/30 text-blue-400 rounded text-xs font-medium">
+                                      Reviewed
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="flex justify-between items-center">
+                                <div className="text-xs text-slate-400">
+                                  {round.requirements && (
+                                    <span>Requires: {round.requirements}</span>
+                                  )}
+                                </div>
+                                <div className="flex space-x-2">
+                                  {submission ? (
+                                    <>
+                                      <button 
+                                        onClick={() => openSubmissionForm(eventWithReg, round)}
+                                        className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                                      >
+                                        Update
+                                      </button>
+                                      {submission.score && (
+                                        <span className="px-2 py-1 bg-purple-900/30 text-purple-300 rounded text-xs">
+                                          Score: {submission.score}
+                                        </span>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <button 
+                                      onClick={() => openSubmissionForm(eventWithReg, round)}
+                                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                                        isDeadlinePassed 
+                                          ? 'bg-red-600 text-white hover:bg-red-700' 
+                                          : 'bg-green-600 text-white hover:bg-green-700'
+                                      }`}
+                                      disabled={eventWithReg.status === 'completed'}
+                                    >
+                                      {isDeadlinePassed ? 'Submit Late' : 'Submit'}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Show submission links if available */}
+                              {submission && (
+                                <div className="mt-3 pt-2 border-t border-slate-600">
+                                  <div className="flex flex-wrap gap-2">
+                                    {submission.submissionData.pptLink && (
+                                      <a 
+                                        href={submission.submissionData.pptLink} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center space-x-1 px-2 py-1 bg-blue-900/30 text-blue-300 rounded text-xs hover:bg-blue-800/30"
+                                      >
+                                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                                          <path d="M8.267 14.68c-.184 0-.308.018-.372.036v1.178c.076.018.171.023.302.023.479 0 .774-.242.774-.651 0-.366-.254-.586-.704-.586zm3.487.012c-.2 0-.33.018-.407.036v2.61c.077.018.201.018.313.018.817.006 1.349-.444 1.349-1.396.006-.83-.479-1.268-1.255-1.268z"/>
+                                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM9.498 16.19c-.309.29-.765.42-1.296.42a2.23 2.23 0 0 1-.308-.018v1.426H7v-3.936A7.558 7.558 0 0 1 8.219 14c.557 0 .953.106 1.22.319.254.202.426.533.426.923-.001.392-.131.723-.367.948zm3.807 1.355c-.42.349-1.059.515-1.84.515-.468 0-.799-.03-1.024-.06v-3.917A7.947 7.947 0 0 1 11.66 14c.757 0 1.249.136 1.633.426.415.308.675.799.675 1.504 0 .763-.279 1.29-.663 1.615zM17 14.77h-1.532v.911H16.9v.734h-1.432v1.604h-.906V14.03H17v.74zM14 9h-1V4l5 5h-4z"/>
+                                        </svg>
+                                        <span>PPT</span>
+                                      </a>
+                                    )}
+                                    {submission.submissionData.githubLink && (
+                                      <a 
+                                        href={submission.submissionData.githubLink} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center space-x-1 px-2 py-1 bg-slate-700 text-slate-300 rounded text-xs hover:bg-slate-600"
+                                      >
+                                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                                          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                        </svg>
+                                        <span>GitHub</span>
+                                      </a>
+                                    )}
+                                    {submission.submissionData.videoLink && (
+                                      <a 
+                                        href={submission.submissionData.videoLink} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="flex items-center space-x-1 px-2 py-1 bg-red-900/30 text-red-300 rounded text-xs hover:bg-red-800/30"
+                                      >
+                                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                        </svg>
+                                        <span>Video</span>
+                                      </a>
+                                    )}
+                                  </div>
+                                  {submission.feedback && (
+                                    <div className="mt-2 p-2 bg-slate-700/50 rounded text-xs">
+                                      <span className="text-slate-400">Feedback: </span>
+                                      <span className="text-slate-300">{submission.feedback}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="px-6 py-4 bg-green-900/20 border-t border-green-600/30">
                     <div className="flex justify-between items-center">
                       <div className="flex space-x-3">
@@ -747,6 +948,27 @@ const ParticipantDashboard = () => {
           userName={user.name}
           userRole="participant"
           onClose={() => setShowCommunication(null)}
+        />
+      )}
+
+      {/* Submission Form Modal */}
+      {submissionForm && user && (
+        <SubmissionForm
+          event={submissionForm.event}
+          round={submissionForm.round}
+          participantEmail={user.email}
+          participantName={user.name}
+          teamName={submissionForm.event.id ? 
+            registeredEventsDetails.find(e => e.id === submissionForm.event.id)?.registrationData?.teamName : 
+            undefined
+          }
+          teamMembers={submissionForm.event.id ? 
+            registeredEventsDetails.find(e => e.id === submissionForm.event.id)?.registrationData?.teamMembers : 
+            undefined
+          }
+          existingSubmission={getSubmissionForRound(submissionForm.event.id!, submissionForm.round.id)}
+          onClose={() => setSubmissionForm(null)}
+          onSubmissionComplete={() => handleSubmissionComplete(submissionForm.event.id!)}
         />
       )}
     </div>
