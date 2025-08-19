@@ -67,34 +67,34 @@ const JudgeDashboard = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-purple-950 via-fuchsia-900 to-pink-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-fuchsia-400 mx-auto"></div>
+          <p className="mt-4 text-fuchsia-300 font-medium">Loading...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-fuchsia-900 to-pink-950">
       {/* Navigation */}
-      <nav className="bg-slate-800 border-b border-slate-700">
+      <nav className="bg-gradient-to-r from-slate-900/95 via-purple-900/95 to-fuchsia-900/95 backdrop-blur-sm shadow-lg border-b border-fuchsia-500/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-blue-400">
+              <Link href="/" className="text-2xl font-bold text-fuchsia-400 drop-shadow-[0_0_10px_rgb(244,114,182)]">
                 HackPlatform
               </Link>
-              <span className="ml-4 px-2 py-1 bg-purple-900/30 text-purple-400 text-sm rounded-full">
+              <span className="ml-4 px-3 py-1 bg-gradient-to-r from-fuchsia-500/20 to-pink-500/20 text-fuchsia-300 text-sm rounded-full border border-fuchsia-400 drop-shadow-[0_0_8px_rgb(244,114,182)]">
                 Judge
               </span>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-slate-300">Welcome, {user.name}</span>
+              <span className="text-purple-200 font-medium">Welcome, {user.name}</span>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-sm text-slate-400 hover:text-slate-100"
+                className="px-4 py-2 text-sm text-fuchsia-300 hover:text-white transition-colors"
               >
                 Logout
               </button>
@@ -106,61 +106,61 @@ const JudgeDashboard = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
-          <h1 className="text-3xl font-bold text-slate-100 mb-2">
+        <div className="bg-gradient-to-br from-slate-900/80 to-purple-900/80 backdrop-blur-sm border border-fuchsia-500/30 rounded-xl p-6 mb-8 shadow-xl">
+          <h1 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">
             Judge Dashboard
           </h1>
-          <p className="text-slate-300">
+          <p className="text-purple-200 font-medium">
             Review submissions, score projects, and provide valuable feedback to participants.
           </p>
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
+          <div className="bg-gradient-to-br from-slate-900/80 to-purple-900/80 backdrop-blur-sm border border-fuchsia-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-900/30 rounded-lg">
-                <div className="w-6 h-6 bg-blue-500 rounded"></div>
+              <div className="p-3 bg-gradient-to-br from-fuchsia-500 to-purple-500 rounded-lg shadow-lg">
+                <div className="w-6 h-6 bg-white rounded shadow-sm"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-slate-400">Events to Judge</p>
-                <p className="text-2xl font-bold text-slate-100">3</p>
+                <p className="text-sm font-medium text-fuchsia-300">Events to Judge</p>
+                <p className="text-2xl font-bold text-white drop-shadow-md">3</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
+          <div className="bg-gradient-to-br from-slate-900/80 to-purple-900/80 backdrop-blur-sm border border-fuchsia-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
             <div className="flex items-center">
-              <div className="p-2 bg-green-900/30 rounded-lg">
-                <div className="w-6 h-6 bg-green-500 rounded"></div>
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-500 rounded-lg shadow-lg">
+                <div className="w-6 h-6 bg-white rounded shadow-sm"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-slate-400">Projects Reviewed</p>
-                <p className="text-2xl font-bold text-slate-100">27</p>
+                <p className="text-sm font-medium text-fuchsia-300">Projects Reviewed</p>
+                <p className="text-2xl font-bold text-white drop-shadow-md">27</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
+          <div className="bg-gradient-to-br from-slate-900/80 to-purple-900/80 backdrop-blur-sm border border-fuchsia-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-900/30 rounded-lg">
-                <div className="w-6 h-6 bg-purple-500 rounded"></div>
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-violet-500 rounded-lg shadow-lg">
+                <div className="w-6 h-6 bg-white rounded shadow-sm"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-slate-400">Pending Reviews</p>
-                <p className="text-2xl font-bold text-slate-100">8</p>
+                <p className="text-sm font-medium text-fuchsia-300">Pending Reviews</p>
+                <p className="text-2xl font-bold text-white drop-shadow-md">8</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
+          <div className="bg-gradient-to-br from-slate-900/80 to-purple-900/80 backdrop-blur-sm border border-fuchsia-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
             <div className="flex items-center">
-              <div className="p-2 bg-yellow-900/30 rounded-lg">
-                <div className="w-6 h-6 bg-yellow-500 rounded"></div>
+              <div className="p-3 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-lg shadow-lg">
+                <div className="w-6 h-6 bg-white rounded shadow-sm"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-slate-400">Average Score</p>
-                <p className="text-2xl font-bold text-slate-100">8.3</p>
+                <p className="text-sm font-medium text-fuchsia-300">Average Score</p>
+                <p className="text-2xl font-bold text-white drop-shadow-md">8.3</p>
               </div>
             </div>
           </div>
@@ -168,40 +168,46 @@ const JudgeDashboard = () => {
 
         {/* Action Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer">
+          <div className="bg-gradient-to-br from-slate-900/80 to-purple-900/80 backdrop-blur-sm border border-fuchsia-500/30 rounded-xl p-6 hover:border-fuchsia-400 hover:shadow-2xl transition-all cursor-pointer group">
             <div className="text-center">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">Review Projects</h3>
-              <p className="text-slate-400 text-sm mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-fuchsia-500 to-purple-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-6 h-6 bg-white rounded"></div>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Review Projects</h3>
+              <p className="text-purple-200 text-sm mb-4">
                 Evaluate and score submitted projects
               </p>
-              <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+              <button className="w-full bg-gradient-to-r from-fuchsia-500 to-purple-500 text-white py-2 px-4 rounded-lg hover:from-fuchsia-400 hover:to-purple-400 transition-all font-medium shadow-lg hover:shadow-xl">
                 Start Reviewing
               </button>
             </div>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 hover:border-green-500 transition-colors cursor-pointer">
+          <div className="bg-gradient-to-br from-slate-900/80 to-purple-900/80 backdrop-blur-sm border border-fuchsia-500/30 rounded-xl p-6 hover:border-emerald-400 hover:shadow-2xl transition-all cursor-pointer group">
             <div className="text-center">
-              <div className="w-12 h-12 bg-green-600 rounded-lg mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">My Events</h3>
-              <p className="text-slate-400 text-sm mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-6 h-6 bg-white rounded"></div>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">My Events</h3>
+              <p className="text-purple-200 text-sm mb-4">
                 View events you&apos;re assigned to judge
               </p>
-              <button className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700">
+              <button className="w-full bg-gradient-to-r from-emerald-500 to-green-500 text-white py-2 px-4 rounded-lg hover:from-emerald-400 hover:to-green-400 transition-all font-medium shadow-lg hover:shadow-xl">
                 View Events
               </button>
             </div>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 hover:border-purple-500 transition-colors cursor-pointer">
+          <div className="bg-gradient-to-br from-slate-900/80 to-purple-900/80 backdrop-blur-sm border border-fuchsia-500/30 rounded-xl p-6 hover:border-purple-400 hover:shadow-2xl transition-all cursor-pointer group">
             <div className="text-center">
-              <div className="w-12 h-12 bg-purple-600 rounded-lg mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">Scoring History</h3>
-              <p className="text-slate-400 text-sm mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-6 h-6 bg-white rounded"></div>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Scoring History</h3>
+              <p className="text-purple-200 text-sm mb-4">
                 Review your past evaluations and scores
               </p>
-              <button className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700">
+              <button className="w-full bg-gradient-to-r from-purple-500 to-violet-500 text-white py-2 px-4 rounded-lg hover:from-purple-400 hover:to-violet-400 transition-all font-medium shadow-lg hover:shadow-xl">
                 View History
               </button>
             </div>
@@ -209,60 +215,62 @@ const JudgeDashboard = () => {
         </div>
 
         {/* Events Available for Judging */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-slate-100 mb-4">Events Available for Judging</h2>
+        <div className="bg-gradient-to-br from-slate-900/80 to-purple-900/80 backdrop-blur-sm border border-fuchsia-500/30 rounded-xl p-6 mb-8 shadow-xl">
+          <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg">Events Available for Judging</h2>
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-slate-400">Loading events...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-fuchsia-500 mx-auto"></div>
+              <p className="mt-2 text-purple-200">Loading events...</p>
             </div>
           ) : events.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-slate-400">
-                <div className="w-12 h-12 bg-slate-600 rounded-lg mx-auto mb-4"></div>
+              <div className="text-purple-200">
+                <div className="w-12 h-12 bg-gradient-to-br from-fuchsia-500 to-purple-500 rounded-lg mx-auto mb-4 flex items-center justify-center shadow-lg">
+                  <div className="w-6 h-6 bg-white rounded"></div>
+                </div>
                 <p>No events available for judging at the moment</p>
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {events.map((event) => (
-                <div key={event.id} className="border border-slate-700 rounded-lg bg-slate-700/50 p-6">
+                <div key={event.id} className="bg-gradient-to-br from-slate-900/80 to-purple-900/80 backdrop-blur-sm border border-fuchsia-500/30 rounded-xl hover:border-fuchsia-400 hover:shadow-2xl transition-all p-6 shadow-xl">
                   <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-semibold text-xl text-slate-100">{event.title}</h3>
+                    <h3 className="font-semibold text-xl text-white">{event.title}</h3>
                     <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                       event.status === 'ongoing' ? 'bg-green-900/30 text-green-400 border border-green-600' :
-                      'bg-blue-900/30 text-blue-400 border border-blue-600'
+                      'bg-purple-900/30 text-purple-400 border border-purple-600'
                     }`}>
                       {event.status}
                     </span>
                   </div>
                   
-                  <p className="text-sm text-slate-300 mb-4 line-clamp-2">{event.description}</p>
+                  <p className="text-sm text-purple-200 mb-4 line-clamp-2">{event.description}</p>
                   
-                  <div className="space-y-2 mb-4 text-sm text-slate-400">
+                  <div className="space-y-2 mb-4 text-sm text-purple-200">
                     <div className="flex justify-between">
                       <span>Theme:</span>
-                      <span className="text-slate-300">{event.theme}</span>
+                      <span className="text-white">{event.theme}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Organizer:</span>
-                      <span className="text-blue-400">{event.organizerName}</span>
+                      <span className="text-fuchsia-400">{event.organizerName}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Event Date:</span>
-                      <span className="text-slate-300">{new Date(event.timeline.eventStart).toLocaleDateString()}</span>
+                      <span className="text-white">{new Date(event.timeline.eventStart).toLocaleDateString()}</span>
                     </div>
                   </div>
                   
-                  <div className="flex justify-between items-center pt-4 border-t border-slate-600">
+                  <div className="flex justify-between items-center pt-4 border-t border-fuchsia-500/30">
                     <button 
                       onClick={() => setShowCommunication(event.id!)}
-                      className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+                      className="text-fuchsia-400 hover:text-fuchsia-300 text-sm font-medium transition-colors"
                     >
                       💬 Join Discussion
                     </button>
                     <button
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+                      className="bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-400 hover:to-purple-400 text-white px-4 py-2 rounded-lg text-sm transition-all font-medium shadow-lg hover:shadow-xl"
                       onClick={() => router.push(`/dashboard/judge/submissions/${event.id}`)}
                     >
                       View Submissions
@@ -272,83 +280,6 @@ const JudgeDashboard = () => {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Pending Reviews */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold text-slate-100 mb-4">Pending Reviews</h2>
-          <div className="space-y-4">
-            {[
-              { 
-                project: 'AI-Powered Healthcare Assistant', 
-                team: 'MedTech Innovators', 
-                event: 'AI Innovation Challenge',
-                submitted: '2 hours ago',
-                priority: 'High'
-              },
-              { 
-                project: 'Blockchain Voting System', 
-                team: 'Crypto Democrats', 
-                event: 'Blockchain Hackathon',
-                submitted: '1 day ago',
-                priority: 'Medium'
-              },
-              { 
-                project: 'Smart Waste Management', 
-                team: 'Green Solutions', 
-                event: 'Green Tech Challenge',
-                submitted: '3 days ago',
-                priority: 'Low'
-              },
-            ].map((review, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border border-slate-600 bg-slate-700 rounded-lg">
-                <div className="flex-1">
-                  <h3 className="font-medium text-slate-100">{review.project}</h3>
-                  <p className="text-sm text-slate-400">
-                    Team: {review.team} • Event: {review.event} • Submitted: {review.submitted}
-                  </p>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <span className={`px-2 py-1 text-xs rounded-full border ${
-                    review.priority === 'High' ? 'bg-red-900/30 text-red-400 border-red-600' :
-                    review.priority === 'Medium' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-600' :
-                    'bg-green-900/30 text-green-400 border-green-600'
-                  }`}>
-                    {review.priority} Priority
-                  </span>
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700">
-                    Review Now
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Evaluations */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-slate-100 mb-4">Recent Evaluations</h2>
-          <div className="space-y-3">
-            {[
-              { project: 'Smart City Traffic Optimizer', score: 9.2, date: '2 hours ago' },
-              { project: 'Mental Health Chatbot', score: 8.7, date: '1 day ago' },
-              { project: 'Renewable Energy Monitor', score: 8.9, date: '2 days ago' },
-              { project: 'Food Waste Reduction App', score: 7.8, date: '3 days ago' },
-            ].map((evaluation, index) => (
-              <div key={index} className="flex items-center justify-between py-3 border-b border-slate-600 last:border-b-0">
-                <div>
-                  <span className="font-medium text-slate-100">{evaluation.project}</span>
-                  <span className="text-sm text-slate-400 ml-2">• {evaluation.date}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-lg font-bold text-blue-400">{evaluation.score}/10</span>
-                  <button className="text-blue-400 hover:text-blue-300 text-sm">
-                    View Details
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 

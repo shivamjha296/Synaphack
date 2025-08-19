@@ -305,17 +305,17 @@ const ParticipantDashboard = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-900 to-cyan-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-slate-400">Loading...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-cyan-400 mx-auto"></div>
+          <p className="mt-4 text-cyan-300 font-medium">Loading...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-900 to-cyan-950">
       {showTeamInviteModal && (
         <TeamInviteModal
           eventId={showTeamInviteModal.eventId}
@@ -326,22 +326,22 @@ const ParticipantDashboard = () => {
         />
       )}
       {/* Navigation */}
-      <nav className="bg-slate-800 shadow-sm border-b border-slate-700">
+      <nav className="bg-gradient-to-r from-slate-950/95 via-blue-900/95 to-cyan-900/95 backdrop-blur-sm shadow-lg border-b border-cyan-500/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-blue-400">
+              <Link href="/" className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_10px_rgb(244,114,182)]">
                 HackPlatform
               </Link>
-              <span className="ml-4 px-2 py-1 bg-green-900/30 text-green-400 text-sm rounded-full border border-green-600">
+              <span className="ml-4 px-3 py-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 text-sm rounded-full border border-cyan-400 drop-shadow-[0_0_8px_rgb(244,114,182)]">
                 Participant
               </span>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-slate-300">Welcome, {user.name}</span>
+              <span className="text-blue-200 font-medium">Welcome, {user.name}</span>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                className="px-4 py-2 text-sm text-cyan-300 hover:text-cyan-100 transition-colors bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-lg border border-cyan-500/30 hover:border-cyan-400"
               >
                 Logout
               </button>
@@ -353,49 +353,49 @@ const ParticipantDashboard = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
-          <h1 className="text-3xl font-bold text-slate-100 mb-2">
+        <div className="bg-gradient-to-r from-slate-950/80 via-blue-900/80 to-cyan-900/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 mb-8 shadow-2xl">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-2 drop-shadow-lg">
             Participant Dashboard
           </h1>
-          <p className="text-slate-300">
+          <p className="text-blue-200 font-medium">
             Join events, manage your team, and submit your amazing projects.
           </p>
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
+          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-900/30 rounded-lg">
-                <div className="w-6 h-6 bg-blue-500 rounded"></div>
+              <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg shadow-lg">
+                <div className="w-6 h-6 bg-white rounded shadow-sm"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-slate-400">Events Joined</p>
-                <p className="text-2xl font-bold text-slate-100">{registeredEventsDetails.length}</p>
+                <p className="text-sm font-medium text-cyan-300">Events Joined</p>
+                <p className="text-2xl font-bold text-white drop-shadow-md">{registeredEventsDetails.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
+          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
             <div className="flex items-center">
-              <div className="p-2 bg-green-900/30 rounded-lg">
-                <div className="w-6 h-6 bg-green-500 rounded"></div>
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg shadow-lg">
+                <div className="w-6 h-6 bg-white rounded shadow-sm"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-slate-400">Submissions</p>
-                <p className="text-2xl font-bold text-slate-100">3</p>
+                <p className="text-sm font-medium text-cyan-300">Submissions</p>
+                <p className="text-2xl font-bold text-white drop-shadow-md">3</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
+          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-900/30 rounded-lg">
-                <div className="w-6 h-6 bg-purple-500 rounded"></div>
+              <div className="p-3 bg-gradient-to-br from-rose-500 to-pink-500 rounded-lg shadow-lg">
+                <div className="w-6 h-6 bg-white rounded shadow-sm"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-slate-400">Team Members</p>
-                <p className="text-2xl font-bold text-slate-100">4</p>
+                <p className="text-sm font-medium text-cyan-300">Team Members</p>
+                <p className="text-2xl font-bold text-white drop-shadow-md">4</p>
               </div>
             </div>
           </div>
@@ -403,40 +403,46 @@ const ParticipantDashboard = () => {
 
         {/* Action Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer">
+          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 hover:border-cyan-400 hover:shadow-2xl transition-all cursor-pointer group">
             <div className="text-center">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">Browse Events</h3>
-              <p className="text-slate-400 text-sm mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-6 h-6 bg-white rounded"></div>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Browse Events</h3>
+              <p className="text-blue-200 text-sm mb-4">
                 Discover new hackathons and competitions to join
               </p>
-              <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+              <button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white py-2 px-4 rounded-lg hover:from-cyan-400 hover:to-blue-400 transition-all font-medium shadow-lg hover:shadow-xl">
                 Browse Events
               </button>
             </div>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 hover:border-green-500 transition-colors cursor-pointer">
+          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 hover:border-indigo-400 hover:shadow-2xl transition-all cursor-pointer group">
             <div className="text-center">
-              <div className="w-12 h-12 bg-green-600 rounded-lg mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">My Team</h3>
-              <p className="text-slate-400 text-sm mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-6 h-6 bg-white rounded"></div>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">My Team</h3>
+              <p className="text-blue-200 text-sm mb-4">
                 Manage your team members and collaborate
               </p>
-              <button className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700">
+              <button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-2 px-4 rounded-lg hover:from-blue-400 hover:to-indigo-400 transition-all font-medium shadow-lg hover:shadow-xl">
                 View Team
               </button>
             </div>
           </div>
 
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 hover:border-purple-500 transition-colors cursor-pointer">
+          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 hover:border-blue-400 hover:shadow-2xl transition-all cursor-pointer group">
             <div className="text-center">
-              <div className="w-12 h-12 bg-purple-600 rounded-lg mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">Submit Project</h3>
-              <p className="text-slate-400 text-sm mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-6 h-6 bg-white rounded"></div>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Submit Project</h3>
+              <p className="text-blue-200 text-sm mb-4">
                 Upload your project and submit to competitions
               </p>
-              <button className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700">
+              <button className="w-full bg-gradient-to-r from-rose-500 to-pink-500 text-white py-2 px-4 rounded-lg hover:from-rose-400 hover:to-pink-400 transition-all font-medium shadow-lg hover:shadow-xl">
                 Submit Project
               </button>
             </div>
@@ -444,17 +450,17 @@ const ParticipantDashboard = () => {
 
           <div 
             onClick={() => setShowCertificates(true)}
-            className="bg-slate-800 border border-slate-700 rounded-lg p-6 hover:border-orange-500 transition-colors cursor-pointer"
+            className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 hover:border-cyan-400 hover:shadow-2xl transition-all cursor-pointer group"
           >
             <div className="text-center">
-              <div className="w-12 h-12 bg-orange-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                 📜
               </div>
-              <h3 className="text-lg font-semibold text-slate-100 mb-2">My Certificates</h3>
-              <p className="text-slate-400 text-sm mb-4">
+              <h3 className="text-lg font-semibold text-white mb-2">My Certificates</h3>
+              <p className="text-blue-200 text-sm mb-4">
                 View and download your achievement certificates
               </p>
-              <button className="w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700">
+              <button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-2 px-4 rounded-lg hover:from-amber-400 hover:to-orange-400 transition-all font-medium shadow-lg hover:shadow-xl">
                 View Certificates
               </button>
             </div>
@@ -471,32 +477,32 @@ const ParticipantDashboard = () => {
         )}
 
         {/* Available Events */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold text-slate-100 mb-4">Available Events</h2>
+        <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 mb-6 shadow-xl">
+          <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg">Available Events</h2>
           
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-slate-400">Loading events...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
+              <span className="ml-2 text-blue-200">Loading events...</span>
             </div>
           ) : events.length === 0 ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-slate-700 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <div className="w-8 h-8 bg-slate-600 rounded"></div>
+              <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg mx-auto mb-4 flex items-center justify-center shadow-lg">
+                <div className="w-8 h-8 bg-white rounded"></div>
               </div>
-              <h3 className="text-lg font-medium text-slate-100 mb-2">No events available</h3>
-              <p className="text-slate-400">Check back later for new hackathons and competitions</p>
+              <h3 className="text-lg font-medium text-white mb-2">No events available</h3>
+              <p className="text-blue-200">Check back later for new hackathons and competitions</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => (
-                <div key={event.id} className="border border-slate-700 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors duration-200 overflow-hidden shadow-lg">
+                <div key={event.id} className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl hover:border-cyan-400 hover:shadow-2xl transition-all duration-200 overflow-hidden shadow-xl">
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-3">
-                      <h3 className="font-semibold text-xl text-slate-100 leading-tight">{event.title}</h3>
+                      <h3 className="font-semibold text-xl text-white leading-tight">{event.title}</h3>
                       <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                         event.status === 'ongoing' ? 'bg-green-900/30 text-green-400 border border-green-600' :
-                        event.status === 'completed' ? 'bg-slate-700 text-slate-300 border border-slate-600' :
+                        event.status === 'completed' ? 'bg-slate-700 text-blue-200 border border-slate-600' :
                         event.status === 'published' ? 'bg-blue-900/30 text-blue-400 border border-blue-600' :
                         'bg-yellow-900/30 text-yellow-400 border border-yellow-600'
                       }`}>
@@ -504,43 +510,43 @@ const ParticipantDashboard = () => {
                       </span>
                     </div>
                     
-                    <p className="text-sm text-slate-300 mb-4 line-clamp-2">{event.description}</p>
+                    <p className="text-sm text-blue-200 mb-4 line-clamp-2">{event.description}</p>
                     
                     <div className="space-y-3 mb-4">
                       <div className="flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded-md text-xs font-medium">{event.theme}</span>
-                        <span className="px-2 py-1 bg-purple-900/30 text-purple-300 rounded-md text-xs font-medium">{event.eventType}</span>
+                        <span className="px-2 py-1 bg-cyan-900/30 text-cyan-300 rounded-md text-xs font-medium">{event.theme}</span>
+                        <span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded-md text-xs font-medium">{event.eventType}</span>
                       </div>
                       
-                      <div className="text-sm text-slate-400 space-y-1">
+                      <div className="text-sm text-blue-200 space-y-1">
                         <div className="flex justify-between">
                           <span>Registration Fee:</span>
-                          <span className="text-slate-300 font-medium">₹{event.registrationFee}</span>
+                          <span className="text-white font-medium">₹{event.registrationFee}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Event Date:</span>
-                          <span className="text-slate-300">{new Date(event.timeline.eventStart).toLocaleDateString()}</span>
+                          <span className="text-white">{new Date(event.timeline.eventStart).toLocaleDateString()}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Organizer:</span>
-                          <span className="text-blue-400">{event.organizerName}</span>
+                          <span className="text-cyan-400">{event.organizerName}</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-700">
+                  <div className="px-6 py-4 bg-gradient-to-r from-blue-950/50 to-cyan-950/50 border-t border-cyan-500/30">
                     <div className="flex justify-between items-center">
                       <div className="flex space-x-3">
                         <button 
                           onClick={() => setSelectedEvent(event)}
-                          className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                          className="text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors"
                         >
                           View Details
                         </button>
                         {isRegistered(event.id!) && (
                           <button 
                             onClick={() => setShowCommunication(event.id!)}
-                            className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+                            className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
                           >
                             💬 Chat
                           </button>
@@ -548,12 +554,12 @@ const ParticipantDashboard = () => {
                       </div>
                       <button 
                         onClick={() => handleRegisterClick(event)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg ${
                           event.status === 'completed'
-                            ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                            ? 'bg-slate-600 text-blue-200 cursor-not-allowed'
                             : isRegistered(event.id!)
-                            ? 'bg-green-600 text-white cursor-default'
-                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white cursor-default'
+                            : 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white'
                         }`}
                         disabled={event.status === 'completed' || isRegistered(event.id!)}
                       >
@@ -573,21 +579,21 @@ const ParticipantDashboard = () => {
         </div>
 
         {/* Registered Events */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold text-slate-100 mb-4">My Registered Events</h2>
+        <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 mb-6 shadow-xl">
+          <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg">My Registered Events</h2>
           
           {registeredEventsLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-slate-400">Loading registered events...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
+              <span className="ml-2 text-blue-200">Loading registered events...</span>
             </div>
           ) : registeredEventsDetails.length === 0 ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-slate-700 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <div className="w-8 h-8 bg-slate-600 rounded"></div>
+              <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg mx-auto mb-4 flex items-center justify-center shadow-lg">
+                <div className="w-8 h-8 bg-white rounded"></div>
               </div>
-              <h3 className="text-lg font-medium text-slate-100 mb-2">No registered events</h3>
-              <p className="text-slate-400">Register for events above to see them here</p>
+              <h3 className="text-lg font-medium text-white mb-2">No registered events</h3>
+              <p className="text-blue-200">Register for events above to see them here</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -605,21 +611,21 @@ const ParticipantDashboard = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-slate-100 mb-4">Recent Activity</h2>
+        <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-xl">
+          <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg">Recent Activity</h2>
           {/* Team Invites Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-100">Your Team Invites</h3>
+            <h3 className="text-lg font-semibold text-white">Your Team Invites</h3>
             
             {teamInvites.length === 0 ? (
-              <p className="text-slate-400">You haven't created any team invites yet.</p>
+              <p className="text-blue-200">You haven't created any team invites yet.</p>
             ) : (
               <div className="space-y-3">
                 {teamInvites.map((invite) => (
-                  <div key={invite.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                  <div key={invite.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-gradient-to-r from-blue-950/50 to-cyan-950/50 rounded-lg border border-cyan-500/30">
                     <div className="mb-2 sm:mb-0">
-                      <div className="text-slate-100 font-medium">{invite.teamName}</div>
-                      <div className="text-sm text-slate-400">Expires: {invite.expiresAt.toLocaleDateString()}</div>
+                      <div className="text-white font-medium">{invite.teamName}</div>
+                      <div className="text-sm text-blue-200">Expires: {invite.expiresAt.toLocaleDateString()}</div>
                     </div>
                     <div className="flex space-x-2">
                       <button
@@ -627,14 +633,14 @@ const ParticipantDashboard = () => {
                           navigator.clipboard.writeText(teamInviteService.getInviteUrl(invite.inviteCode))
                           alert('Invite link copied to clipboard!')
                         }}
-                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                        className="px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm rounded hover:from-cyan-400 hover:to-blue-400 transition-all"
                       >
                         Copy Link
                       </button>
                       {invite.status === 'active' && (
                         <button
                           onClick={() => handleRevokeInvite(invite.id!)}
-                          className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                          className="px-3 py-1 bg-gradient-to-r from-red-500 to-rose-500 text-white text-sm rounded hover:from-red-400 hover:to-rose-400 transition-all"
                         >
                           Revoke
                         </button>
@@ -646,15 +652,15 @@ const ParticipantDashboard = () => {
             )}
             
             <div className="pt-4">
-              <h3 className="text-lg font-semibold text-slate-100 mb-3">Your Teams</h3>
+              <h3 className="text-lg font-semibold text-white00 mb-3">Your Teams</h3>
               <div className="space-y-3">
                 {registeredEventsDetails
                   .filter(event => event.registrationData?.teamName)
                   .map((event) => (
                     <div key={event.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-slate-700/50 rounded-lg border border-slate-600">
                       <div>
-                        <div className="text-slate-100 font-medium">{event.registrationData.teamName}</div>
-                        <div className="text-sm text-slate-400">{event.title}</div>
+                        <div className="text-white00 font-medium">{event.registrationData.teamName}</div>
+                        <div className="text-sm text-cyan-30000">{event.title}</div>
                       </div>
                       <div className="mt-2 sm:mt-0">
                         <button
@@ -668,7 +674,7 @@ const ParticipantDashboard = () => {
                   ))}
                   
                 {registeredEventsDetails.filter(event => event.registrationData?.teamName).length === 0 && (
-                  <p className="text-slate-400">You haven't created any teams yet.</p>
+                  <p className="text-cyan-30000">You haven't created any teams yet.</p>
                 )}
               </div>
             </div>
@@ -679,14 +685,14 @@ const ParticipantDashboard = () => {
       {/* Event Details Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-slate-700">
+          <div className="bg-gradient-to-br from-slate-800/70 to-blue-800/70 backdrop-blur-sm00 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-cyan-500/3000">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-700">
+            <div className="flex items-center justify-between p-6 border-b border-cyan-500/3000">
               <div className="flex items-center space-x-4">
-                <h2 className="text-2xl font-bold text-slate-100">{selectedEvent.title}</h2>
+                <h2 className="text-2xl font-bold text-white00">{selectedEvent.title}</h2>
                 <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                   selectedEvent.status === 'ongoing' ? 'bg-green-900/30 text-green-400 border border-green-600' :
-                  selectedEvent.status === 'completed' ? 'bg-slate-700 text-slate-300 border border-slate-600' :
+                  selectedEvent.status === 'completed' ? 'bg-slate-700 text-blue-20000 border border-slate-600' :
                   selectedEvent.status === 'published' ? 'bg-blue-900/30 text-blue-400 border border-blue-600' :
                   'bg-yellow-900/30 text-yellow-400 border border-yellow-600'
                 }`}>
@@ -695,7 +701,7 @@ const ParticipantDashboard = () => {
               </div>
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="text-slate-400 hover:text-slate-100 text-2xl"
+                className="text-cyan-30000 hover:text-white00 text-2xl"
               >
                 ×
               </button>
@@ -705,60 +711,60 @@ const ParticipantDashboard = () => {
             <div className="p-6 space-y-6">
               {/* Description */}
               <div>
-                <h3 className="text-lg font-semibold text-slate-100 mb-2">About the Event</h3>
-                <p className="text-slate-300">{selectedEvent.description}</p>
+                <h3 className="text-lg font-semibold text-white00 mb-2">About the Event</h3>
+                <p className="text-blue-20000">{selectedEvent.description}</p>
               </div>
 
               {/* Event Details Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-slate-100">Event Information</h3>
+                  <h3 className="text-lg font-semibold text-white00">Event Information</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Theme:</span>
-                      <span className="text-slate-100">{selectedEvent.theme}</span>
+                      <span className="text-cyan-30000">Theme:</span>
+                      <span className="text-white00">{selectedEvent.theme}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Type:</span>
-                      <span className="text-slate-100 capitalize">{selectedEvent.eventType}</span>
+                      <span className="text-cyan-30000">Type:</span>
+                      <span className="text-white00 capitalize">{selectedEvent.eventType}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Location:</span>
-                      <span className="text-slate-100">{selectedEvent.location}</span>
+                      <span className="text-cyan-30000">Location:</span>
+                      <span className="text-white00">{selectedEvent.location}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Max Participants:</span>
-                      <span className="text-slate-100">{selectedEvent.maxParticipants}</span>
+                      <span className="text-cyan-30000">Max Participants:</span>
+                      <span className="text-white00">{selectedEvent.maxParticipants}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Registration Fee:</span>
-                      <span className="text-slate-100">₹{selectedEvent.registrationFee}</span>
+                      <span className="text-cyan-30000">Registration Fee:</span>
+                      <span className="text-white00">₹{selectedEvent.registrationFee}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-slate-100">Timeline</h3>
+                  <h3 className="text-lg font-semibold text-white00">Timeline</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Registration Start:</span>
-                      <span className="text-slate-100">{new Date(selectedEvent.timeline.registrationStart).toLocaleString()}</span>
+                      <span className="text-cyan-30000">Registration Start:</span>
+                      <span className="text-white00">{new Date(selectedEvent.timeline.registrationStart).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Registration End:</span>
-                      <span className="text-slate-100">{new Date(selectedEvent.timeline.registrationEnd).toLocaleString()}</span>
+                      <span className="text-cyan-30000">Registration End:</span>
+                      <span className="text-white00">{new Date(selectedEvent.timeline.registrationEnd).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Event Start:</span>
-                      <span className="text-slate-100">{new Date(selectedEvent.timeline.eventStart).toLocaleString()}</span>
+                      <span className="text-cyan-30000">Event Start:</span>
+                      <span className="text-white00">{new Date(selectedEvent.timeline.eventStart).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Event End:</span>
-                      <span className="text-slate-100">{new Date(selectedEvent.timeline.eventEnd).toLocaleString()}</span>
+                      <span className="text-cyan-300">Event End:</span>
+                      <span className="text-white">{new Date(selectedEvent.timeline.eventEnd).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">Submission Deadline:</span>
-                      <span className="text-slate-100">{new Date(selectedEvent.timeline.submissionDeadline).toLocaleString()}</span>
+                      <span className="text-cyan-300">Submission Deadline:</span>
+                      <span className="text-white">{new Date(selectedEvent.timeline.submissionDeadline).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -767,43 +773,45 @@ const ParticipantDashboard = () => {
               {/* Rounds Information */}
               {selectedEvent.rounds && selectedEvent.rounds.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-100 mb-3">Hackathon Rounds</h3>
+                  <h3 className="text-lg font-semibold text-white00 mb-3">Hackathon Rounds</h3>
                   <div className="space-y-4">
                     {selectedEvent.rounds.map((round, index) => (
                       <div key={round.id} className="bg-slate-700/50 rounded-lg p-4">
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-medium text-slate-100">Round {index + 1}: {round.name}</h4>
+                          <h4 className="font-medium text-white00">Round {index + 1}: {round.name}</h4>
                           {round.maxParticipants && (
                             <span className="text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded">
                               Max: {round.maxParticipants}
                             </span>
                           )}
                         </div>
-                        <p className="text-slate-300 text-sm mb-3">{round.description}</p>
+                        <p className="text-blue-20000 text-sm mb-3">{round.description}</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
                           <div>
-                            <span className="text-slate-400">Start:</span>
-                            <span className="text-slate-300 ml-1">{new Date(round.startDate).toLocaleDateString()}</span>
+                            <span className="text-cyan-30000">Start:</span>
+                            <span className="text-blue-20000 ml-1">{new Date(round.startDate).toLocaleDateString()}</span>
                           </div>
                           <div>
-                            <span className="text-slate-400">End:</span>
-                            <span className="text-slate-300 ml-1">{new Date(round.endDate).toLocaleDateString()}</span>
+                            <span className="text-cyan-300">End:</span>
+                            <span className="text-blue-200 ml-1">{new Date(round.endDate).toLocaleDateString()}</span>
                           </div>
                           <div>
-                            <span className="text-slate-400">Submission:</span>
-                            <span className="text-slate-300 ml-1">{new Date(round.submissionDeadline).toLocaleDateString()}</span>
+                            <span className="text-cyan-300">Submission:</span>
+                            <span className="text-blue-200 ml-1">{new Date(round.submissionDeadline).toLocaleDateString()}</span>
                           </div>
                         </div>
                         {round.requirements && (
                           <div className="mt-2">
-                            <span className="text-slate-400 text-xs">Requirements:</span>
-                            <span className="text-slate-300 text-xs ml-1">{round.requirements}</span>
+                            <span className="text-cyan-300 text-xs">Requirements:</span>
+                            <span className="text-blue-200 text-xs ml-1">{round.requirements}</span>
                           </div>
                         )}
                         {round.eliminationCriteria && (
                           <div className="mt-2">
-                            <span className="text-slate-400 text-xs">Elimination Criteria:</span>
-                            <span className="text-slate-300 text-xs ml-1">{round.eliminationCriteria}</span>
+                            <span className="text-cyan-300 text-xs">Elimination:</span>
+                            <span className="text-blue-200 text-xs ml-1">{round.eliminationCriteria}</span>
+                            <span className="text-cyan-30000 text-xs">Elimination Criteria:</span>
+                            <span className="text-blue-20000 text-xs ml-1">{round.eliminationCriteria}</span>
                           </div>
                         )}
                       </div>
@@ -814,24 +822,24 @@ const ParticipantDashboard = () => {
 
               {/* Contact Information */}
               <div>
-                <h3 className="text-lg font-semibold text-slate-100 mb-3">Contact Information</h3>
+                <h3 className="text-lg font-semibold text-white00 mb-3">Contact Information</h3>
                 <div className="bg-slate-700/50 rounded-lg p-4 space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Organizer:</span>
-                    <span className="text-slate-100">{selectedEvent.organizerName}</span>
+                    <span className="text-cyan-30000">Organizer:</span>
+                    <span className="text-white00">{selectedEvent.organizerName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Email:</span>
+                    <span className="text-cyan-30000">Email:</span>
                     <span className="text-blue-400">{selectedEvent.contactEmail}</span>
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
+              <div className="flex justify-end space-x-3 pt-4 border-t border-cyan-500/3000">
                 <button
                   onClick={() => setSelectedEvent(null)}
-                  className="px-6 py-2 text-slate-400 hover:text-slate-300 transition-colors"
+                  className="px-6 py-2 text-cyan-30000 hover:text-blue-20000 transition-colors"
                 >
                   Close
                 </button>
@@ -842,7 +850,7 @@ const ParticipantDashboard = () => {
                   }}
                   className={`px-6 py-2 rounded-lg font-medium transition-colors ${
                     selectedEvent.status === 'completed'
-                      ? 'bg-slate-600 text-slate-400 cursor-not-allowed'
+                      ? 'bg-slate-600 text-cyan-30000 cursor-not-allowed'
                       : isRegistered(selectedEvent.id!)
                       ? 'bg-green-600 text-white cursor-default'
                       : 'bg-blue-600 hover:bg-blue-700 text-white'

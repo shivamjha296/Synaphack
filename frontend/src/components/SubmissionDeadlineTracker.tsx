@@ -113,11 +113,11 @@ const SubmissionDeadlineTracker = ({
 
   const getStatusColor = (status: DeadlineAlert['status']) => {
     switch (status) {
-      case 'urgent': return 'bg-red-900/30 border-red-600 text-red-400'
-      case 'warning': return 'bg-yellow-900/30 border-yellow-600 text-yellow-400'
-      case 'normal': return 'bg-blue-900/30 border-blue-600 text-blue-400'
-      case 'passed': return 'bg-gray-900/30 border-gray-600 text-gray-400'
-      default: return 'bg-gray-900/30 border-gray-600 text-gray-400'
+      case 'urgent': return 'bg-red-500/20 border-red-500/30 text-red-300'
+      case 'warning': return 'bg-yellow-500/20 border-yellow-500/30 text-yellow-300'
+      case 'normal': return 'bg-cyan-500/20 border-cyan-500/30 text-cyan-300'
+      case 'passed': return 'bg-gray-500/20 border-gray-500/30 text-gray-300'
+      default: return 'bg-gray-500/20 border-gray-500/30 text-gray-300'
     }
   }
 
@@ -148,12 +148,12 @@ const SubmissionDeadlineTracker = ({
   }
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-6">
+    <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 mb-6 shadow-xl">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
-          <h3 className="text-xl font-semibold text-slate-100">Submission Deadlines</h3>
+          <h3 className="text-xl font-semibold text-white drop-shadow-lg">Submission Deadlines</h3>
           {urgentAlerts.length > 0 && (
-            <span className="px-2 py-1 bg-red-900/30 text-red-400 text-xs font-medium rounded-full border border-red-600">
+            <span className="px-2 py-1 bg-red-500/20 text-red-300 text-xs font-medium rounded-full border border-red-500/30">
               {urgentAlerts.length} Urgent
             </span>
           )}
@@ -161,7 +161,7 @@ const SubmissionDeadlineTracker = ({
         {deadlineAlerts.length > 5 && (
           <button
             onClick={() => setShowAll(!showAll)}
-            className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+            className="text-cyan-300 hover:text-cyan-200 text-sm font-medium transition-colors"
           >
             {showAll ? 'Show Less' : `Show All (${deadlineAlerts.length})`}
           </button>
@@ -176,23 +176,23 @@ const SubmissionDeadlineTracker = ({
           return (
             <div
               key={`${alert.eventId}-${alert.roundId}`}
-              className={`border rounded-lg p-4 transition-colors ${getStatusColor(alert.status)}`}
+              className={`border rounded-xl p-4 transition-all backdrop-blur-sm shadow-lg hover:shadow-xl ${getStatusColor(alert.status)}`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <span className="text-2xl">{getStatusIcon(alert.status)}</span>
                   <div>
-                    <h4 className="font-medium text-slate-100">
+                    <h4 className="font-medium text-white drop-shadow-lg">
                       {alert.eventTitle} - {alert.roundName}
                     </h4>
                     <div className="flex items-center space-x-4 mt-1 text-sm">
-                      <span>
+                      <span className="text-blue-200">
                         Deadline: {alert.deadline.toLocaleDateString()} at {alert.deadline.toLocaleTimeString()}
                       </span>
                       <span className={`font-medium ${
                         alert.status === 'urgent' ? 'text-red-300' :
                         alert.status === 'warning' ? 'text-yellow-300' :
-                        'text-slate-300'
+                        'text-cyan-300'
                       }`}>
                         {formatTimeLeft(alert.hoursLeft)}
                       </span>
@@ -202,11 +202,11 @@ const SubmissionDeadlineTracker = ({
 
                 <div className="flex items-center space-x-3">
                   {alert.hasSubmission ? (
-                    <span className="px-3 py-1 bg-green-900/30 text-green-400 text-sm font-medium rounded border border-green-600">
+                    <span className="px-3 py-1 bg-green-500/20 text-green-300 text-sm font-medium rounded-lg border border-green-500/30 shadow-md">
                       ✓ Submitted
                     </span>
                   ) : alert.status === 'passed' ? (
-                    <span className="px-3 py-1 bg-gray-900/30 text-gray-400 text-sm font-medium rounded border border-gray-600">
+                    <span className="px-3 py-1 bg-gray-500/20 text-gray-300 text-sm font-medium rounded-lg border border-gray-500/30 shadow-md">
                       Missed
                     </span>
                   ) : (
@@ -222,12 +222,12 @@ const SubmissionDeadlineTracker = ({
                           })
                         }
                       }}
-                      className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
+                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all shadow-lg hover:shadow-xl ${
                         alert.status === 'urgent' 
-                          ? 'bg-red-600 hover:bg-red-700 text-white'
+                          ? 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-400 hover:to-pink-400 text-white'
                           : alert.status === 'warning'
-                          ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white'
+                          : 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white'
                       }`}
                     >
                       Submit Now
@@ -241,8 +241,8 @@ const SubmissionDeadlineTracker = ({
       </div>
 
       {urgentAlerts.length > 0 && (
-        <div className="mt-4 p-3 bg-red-900/20 border border-red-600/30 rounded-lg">
-          <div className="flex items-center space-x-2 text-red-400">
+        <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl backdrop-blur-sm shadow-lg">
+          <div className="flex items-center space-x-2 text-red-300">
             <span>🚨</span>
             <span className="font-medium">
               You have {urgentAlerts.length} urgent submission{urgentAlerts.length > 1 ? 's' : ''} due within 6 hours!
