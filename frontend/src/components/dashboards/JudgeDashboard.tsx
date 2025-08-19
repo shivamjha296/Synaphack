@@ -29,9 +29,18 @@ const JudgeDashboard = () => {
     }
   }, [router])
 
-  const handleLogout = () => {
-    localStorage.removeItem('user')
-    router.push('/')
+  const handleLogout = async () => {
+    try {
+      const { authService } = await import('../../lib/authService')
+      await authService.signOut()
+      localStorage.removeItem('user')
+      router.push('/')
+    } catch (error) {
+      console.error('Error signing out:', error)
+      // Fallback: just clear localStorage and redirect
+      localStorage.removeItem('user')
+      router.push('/')
+    }
   }
 
   if (!user) {

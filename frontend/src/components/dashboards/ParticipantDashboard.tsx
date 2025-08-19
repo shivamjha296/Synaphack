@@ -25,7 +25,7 @@ const ParticipantDashboard = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
-    // Check if user is logged in
+    // Check if user is logged in and ensure Firebase auth state
     const userData = localStorage.getItem('user')
     console.log('ParticipantDashboard: Raw user data from localStorage:', userData)
     if (userData) {
@@ -139,12 +139,33 @@ const ParticipantDashboard = () => {
     }
   }
 
+  const maintainFirebaseAuth = async (user: any) => {
+    try {
+      const { onAuthStateChanged } = await import('firebase/auth')
+      const { auth } = await import('../../lib/firebase')
+      
+      // Check if user is already authenticated
+      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        if (!firebaseUser) {
+          // User not authenticated with Firebase, redirect to login
+          console.warn('User not authenticated with Firebase, redirecting to login')
+          localStorage.removeItem('user')
+          router.push('/login')
+        }
+      })
+      
+      return unsubscribe
+    } catch (error) {
+      console.error('Error checking Firebase auth:', error)
+    }
+  }
+
   const loadAvailableEvents = async () => {
     try {
       const { eventService } = await import('../../lib/eventService')
-      const allEvents = await eventService.getAllEvents()
-      // Show all events for participants to see what's available
-      setEvents(allEvents)
+      // Show only published events for participants (not drafts)
+      const publishedEvents = await eventService.getPublishedEvents()
+      setEvents(publishedEvents)
     } catch (error) {
       console.error('Error loading events:', error)
     } finally {
@@ -152,9 +173,18 @@ const ParticipantDashboard = () => {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('user')
-    router.push('/')
+  const handleLogout = async () => {
+    try {
+      const { authService } = await import('../../lib/authService')
+      await authService.signOut()
+      localStorage.removeItem('user')
+      router.push('/')
+    } catch (error) {
+      console.error('Error signing out:', error)
+      // Fallback: just clear localStorage and redirect
+      localStorage.removeItem('user')
+      router.push('/')
+    }
   }
 
   const handleRegistrationComplete = () => {
