@@ -95,6 +95,20 @@ frontend/
 2. Enable Firestore Database
 3. Add your web app and get config
 4. Update `.env.local` with your credentials
+5. Configure Firebase Storage CORS settings (required for certificate uploads):
+   ```bash
+   # Install Google Cloud SDK if not already installed
+   # https://cloud.google.com/sdk/docs/install
+   
+   # Authenticate with Google Cloud
+   gcloud auth login
+   
+   # Set your project
+   gcloud config set project your-project-id
+   
+   # Apply CORS configuration
+   gsutil cors set cors.json gs://your-storage-bucket-name
+   ```
 
 ## Development
 

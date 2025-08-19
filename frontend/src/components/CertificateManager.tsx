@@ -215,9 +215,9 @@ const CertificateManager = ({ eventId, eventTitle }: CertificateManagerProps) =>
                       Download
                     </button>
                     
-                    {certificate.certificateUrl && (
+                    {certificate.certificateBase64 && (
                       <a
-                        href={certificate.certificateUrl}
+                        href={certificate.certificateBase64}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3 py-1 text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 rounded transition-colors"

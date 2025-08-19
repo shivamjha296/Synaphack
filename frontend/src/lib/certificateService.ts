@@ -9,8 +9,7 @@ import {
   Timestamp,
   getDoc
 } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { db, storage } from './firebase'
+import { db } from './firebase'
 
 export interface Certificate {
   id?: string
@@ -20,7 +19,7 @@ export interface Certificate {
   participantEmail: string
   eventTitle: string
   completionDate: Date
-  certificateUrl?: string
+  certificateBase64?: string
   certificateNumber: string
   issuedAt: Date
   template: 'participation' | 'completion' | 'achievement' | 'winner'
@@ -201,16 +200,14 @@ class CertificateService {
     })
   }
 
-  // Upload certificate to storage
-  private async uploadCertificate(
-    blob: Blob,
-    certificateNumber: string
-  ): Promise<string> {
-    const fileName = `certificates/${certificateNumber}.png`
-    const storageRef = ref(storage, fileName)
-    
-    await uploadBytes(storageRef, blob)
-    return await getDownloadURL(storageRef)
+  // Convert blob to base64 string
+  private async blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
 
   // Get default template
@@ -266,11 +263,11 @@ class CertificateService {
       // Generate certificate canvas
       const canvas = await this.createCertificateCanvas(certificate, templateData)
       
-      // Convert to blob and upload
+      // Convert to blob and then to base64
       const blob = await this.canvasToBlob(canvas)
-      const certificateUrl = await this.uploadCertificate(blob, certificateNumber)
+      const certificateBase64 = await this.blobToBase64(blob)
       
-      certificate.certificateUrl = certificateUrl
+      certificate.certificateBase64 = certificateBase64
       certificate.status = 'issued'
 
       // Save certificate to database
@@ -435,9 +432,14 @@ class CertificateService {
       
       const certificate = certificateDoc.data() as Certificate
       
-      if (certificate.certificateUrl) {
-        // Open certificate URL in new tab for download
-        window.open(certificate.certificateUrl, '_blank')
+      if (certificate.certificateBase64) {
+        // Create a download link from the base64 data
+        const link = document.createElement('a')
+        link.href = certificate.certificateBase64
+        link.download = `Certificate-${certificate.certificateNumber}.png`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
       }
     } catch (error) {
       console.error('Error downloading certificate:', error)

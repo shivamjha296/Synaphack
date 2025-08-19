@@ -240,9 +240,9 @@ const ParticipantCertificates = () => {
                     Download
                   </button>
                   
-                  {certificate.certificateUrl && (
+                  {certificate.certificateBase64 && (
                     <a
-                      href={certificate.certificateUrl}
+                      href={certificate.certificateBase64}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors text-sm font-medium text-center"
