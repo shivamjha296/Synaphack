@@ -110,6 +110,9 @@ export interface EventRegistration {
     email: string
     role: string
   }[]
+  teamInviteCode?: string // Code for inviting team members
+  joinedViaInvite?: boolean // Flag to indicate if user joined via invite
+  teamCreator?: string // Email of the team creator
   additionalInfo?: {
     [key: string]: any
   }

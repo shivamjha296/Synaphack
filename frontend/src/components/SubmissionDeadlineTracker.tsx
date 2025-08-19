@@ -19,11 +19,12 @@ interface DeadlineAlert {
   status: 'urgent' | 'warning' | 'normal' | 'passed'
 }
 
-const SubmissionDeadlineTracker = ({ 
-  events, 
-  userSubmissions, 
-  onOpenSubmissionForm 
+const SubmissionDeadlineTracker = ({
+  events = [],
+  userSubmissions = {},
+  onOpenSubmissionForm
 }: SubmissionDeadlineTrackerProps) => {
+
   const [deadlineAlerts, setDeadlineAlerts] = useState<DeadlineAlert[]>([])
   const [showAll, setShowAll] = useState(false)
 
@@ -36,52 +37,65 @@ const SubmissionDeadlineTracker = ({
       
       // Check main event deadline
       if (event.timeline?.submissionDeadline) {
-        const deadline = event.timeline.submissionDeadline
-        const hoursLeft = Math.floor((deadline.getTime() - now.getTime()) / (1000 * 60 * 60))
-        const hasSubmission = eventSubmissions.some(s => s.eventId === event.id)
-        
-        let status: DeadlineAlert['status'] = 'normal'
-        if (hoursLeft < 0) status = 'passed'
-        else if (hoursLeft <= 6) status = 'urgent'
-        else if (hoursLeft <= 24) status = 'warning'
-
-        alerts.push({
-          eventId: event.id!,
-          eventTitle: event.title,
-          roundId: 'main',
-          roundName: 'Main Submission',
-          deadline,
-          hoursLeft,
-          hasSubmission,
-          status
-        })
+        const deadline = typeof event.timeline.submissionDeadline === 'string'
+          ? new Date(event.timeline.submissionDeadline)
+          : event.timeline.submissionDeadline;
+        // Ensure deadline is a valid Date
+        if (deadline instanceof Date && !isNaN(deadline.getTime())) {
+          const hoursLeft = Math.floor((deadline.getTime() - now.getTime()) / (1000 * 60 * 60));
+          const hasSubmission = eventSubmissions.some(s => s.eventId === event.id);
+          let status: DeadlineAlert['status'] = 'normal';
+          if (hoursLeft < 0) status = 'passed';
+          else if (hoursLeft <= 6) status = 'urgent';
+          else if (hoursLeft <= 24) status = 'warning';
+          alerts.push({
+            eventId: event.id!,
+            eventTitle: event.title,
+            roundId: 'main',
+            roundName: 'Main Submission',
+            deadline,
+            hoursLeft,
+            hasSubmission,
+            status
+          });
+        } else {
+          console.error("Invalid deadline for event:", event);
+        }
       }
 
       // Check round deadlines
       if (event.rounds) {
         event.rounds.forEach(round => {
           if (round.submissionDeadline) {
-            const deadline = round.submissionDeadline
-            const hoursLeft = Math.floor((deadline.getTime() - now.getTime()) / (1000 * 60 * 60))
-            const hasSubmission = eventSubmissions.some(s => s.roundId === round.id)
-            
-            let status: DeadlineAlert['status'] = 'normal'
-            if (hoursLeft < 0) status = 'passed'
-            else if (hoursLeft <= 6) status = 'urgent'
-            else if (hoursLeft <= 24) status = 'warning'
-
-            alerts.push({
-              eventId: event.id!,
-              eventTitle: event.title,
-              roundId: round.id,
-              roundName: round.name,
-              deadline,
-              hoursLeft,
-              hasSubmission,
-              status
-            })
+            const deadline =
+              round.submissionDeadline && typeof (round.submissionDeadline as any).toDate === 'function'
+                ? (round.submissionDeadline as any).toDate()
+                : typeof round.submissionDeadline === 'string'
+                ? new Date(round.submissionDeadline)
+                : round.submissionDeadline;
+            // Ensure deadline is a valid Date
+            if (deadline instanceof Date && !isNaN(deadline.getTime())) {
+              const hoursLeft = Math.floor((deadline.getTime() - now.getTime()) / (1000 * 60 * 60));
+              const hasSubmission = eventSubmissions.some(s => s.roundId === round.id);
+              let status: DeadlineAlert['status'] = 'normal';
+              if (hoursLeft < 0) status = 'passed';
+              else if (hoursLeft <= 6) status = 'urgent';
+              else if (hoursLeft <= 24) status = 'warning';
+              alerts.push({
+                eventId: event.id!,
+                eventTitle: event.title,
+                roundId: round.id,
+                roundName: round.name,
+                deadline,
+                hoursLeft,
+                hasSubmission,
+                status
+              });
+            } else {
+              console.error("Invalid deadline for round:", round);
+            }
           }
-        })
+        });
       }
     })
 

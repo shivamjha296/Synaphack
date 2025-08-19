@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Event, UserProfile, eventService } from '../lib/eventService'
+import { Event, UserProfile, eventService, EventRegistration } from '../lib/eventService'
+import TeamInviteModal from './TeamInviteModal'
+import { TeamInvite, teamInviteService } from '../lib/teamInviteService'
 
 interface RegistrationModalProps {
   event: Event
@@ -28,12 +30,15 @@ const RegistrationModal = ({ event, userEmail, userName, onClose, onRegistration
     bio: ''
   })
   const [teamForm, setTeamForm] = useState({
-    teamName: '',
-    teamMembers: [{ name: '', email: '', role: '' }]
+    teamName: ''
   })
+  const [teamOption, setTeamOption] = useState<'create' | 'join' | 'solo'>('solo')
+  const [inviteCode, setInviteCode] = useState('')
   const [additionalInfo, setAdditionalInfo] = useState<{[key: string]: any}>({})
   const [error, setError] = useState('')
   const [newSkill, setNewSkill] = useState('')
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [teamInvite, setTeamInvite] = useState<TeamInvite | null>(null)
 
   useEffect(() => {
     loadUserProfile()
@@ -72,35 +77,14 @@ const RegistrationModal = ({ event, userEmail, userName, onClose, onRegistration
     }
   }
 
-  const handleRemoveSkill = (skillToRemove: string) => {
+  const handleRemoveSkill = (skill: string) => {
     setProfileForm(prev => ({
       ...prev,
-      skills: prev.skills.filter(skill => skill !== skillToRemove)
+      skills: prev.skills.filter(s => s !== skill)
     }))
   }
 
-  const handleAddTeamMember = () => {
-    setTeamForm(prev => ({
-      ...prev,
-      teamMembers: [...prev.teamMembers, { name: '', email: '', role: '' }]
-    }))
-  }
-
-  const handleRemoveTeamMember = (index: number) => {
-    setTeamForm(prev => ({
-      ...prev,
-      teamMembers: prev.teamMembers.filter((_, i) => i !== index)
-    }))
-  }
-
-  const handleTeamMemberChange = (index: number, field: string, value: string) => {
-    setTeamForm(prev => ({
-      ...prev,
-      teamMembers: prev.teamMembers.map((member, i) => 
-        i === index ? { ...member, [field]: value } : member
-      )
-    }))
-  }
+  // Team member functions removed as members will join using invite code
 
   const handleNext = async () => {
     setError('')
@@ -127,6 +111,17 @@ const RegistrationModal = ({ event, userEmail, userName, onClose, onRegistration
         setLoading(false)
       }
     } else if (step === 'team') {
+      // Validate team information
+      if (teamOption === 'create' && !teamForm.teamName) {
+        setError('Please enter a team name')
+        return
+      }
+      
+      if (teamOption === 'join' && !inviteCode.trim()) {
+        setError('Please enter a valid invite code')
+        return
+      }
+      
       setStep('additional')
     } else if (step === 'additional') {
       setStep('confirm')
@@ -167,75 +162,139 @@ const RegistrationModal = ({ event, userEmail, userName, onClose, onRegistration
       
       const profileId = await eventService.saveProfile(profileData)
       
-      // Then register for the event with complete information
-      await eventService.registerForEvent({
-        eventId: event.id!,
-        participantId: profileId || userEmail,
-        participantEmail: userEmail,
-        participantName: userName,
-        participantPhone: profileForm.phone,
-        participantCollege: profileForm.college,
-        participantCourse: profileForm.course,
-        participantYear: profileForm.year,
-        participantSkills: profileForm.skills,
-        participantExperience: profileForm.experience,
-        participantGithub: profileForm.github,
-        participantLinkedin: profileForm.linkedin,
-        participantPortfolio: profileForm.portfolio,
-        participantBio: profileForm.bio,
-        teamName: teamForm.teamName || undefined,
-        teamMembers: teamForm.teamName ? teamForm.teamMembers.filter(member => member.name) : undefined,
-        additionalInfo,
-        status: 'pending',
-        paymentStatus: event.registrationFee > 0 ? 'pending' : 'paid'
-      })
-      
-      onRegistrationComplete()
-      onClose()
-    } catch (error: any) {
-      setError(error.message || 'Registration failed')
-    } finally {
+      // Handle different team options
+      if (teamOption === 'join') {
+        // Validate invite code
+        if (!inviteCode.trim()) {
+          setError('Please enter a valid invite code')
+          setLoading(false)
+          return
+        }
+        
+        try {
+          // Join team with invite code
+          const joined = await teamInviteService.joinTeamWithInvite(
+            inviteCode,
+            userEmail,
+            userName
+          )
+          
+          if (joined) {
+            onRegistrationComplete()
+            onClose()
+          } else {
+            setError('Failed to join team. The invite may be invalid or expired.')
+          }
+        } catch (joinError: any) {
+          setError(joinError.message || 'Failed to join team')
+        }
+      } else {
+        // For solo or create team options
+        // Then register for the event with complete information
+        const registrationData = {
+          eventId: event.id!,
+          participantId: profileId || userEmail,
+          participantEmail: userEmail,
+          participantName: userName,
+          participantPhone: profileForm.phone,
+          participantCollege: profileForm.college,
+          participantCourse: profileForm.course,
+          participantYear: profileForm.year,
+          participantSkills: profileForm.skills,
+          participantExperience: profileForm.experience,
+          participantGithub: profileForm.github,
+          participantLinkedin: profileForm.linkedin,
+          participantPortfolio: profileForm.portfolio,
+          participantBio: profileForm.bio,
+          teamName: teamOption === 'create' ? teamForm.teamName : undefined,
+          teamMembers: teamOption === 'create' ? [] : undefined, // Empty array for team creation, undefined for solo
+          teamCreator: teamOption === 'create' && teamForm.teamName ? userEmail : undefined,
+          additionalInfo,
+          status: 'pending' as 'pending' | 'approved' | 'rejected',
+          paymentStatus: event.registrationFee > 0 ? 'pending' as const : 'paid' as const
+        }
+        
+        await eventService.registerForEvent(registrationData)
+        
+        if (teamOption === 'create' && teamForm.teamName) {
+          setShowInviteModal(true)
+        } else {
+          onRegistrationComplete()
+          onClose()
+        }
+      }
+    } catch (error) {
+      console.error('Registration error:', error)
+      setError('Failed to register for the event')
       setLoading(false)
     }
   }
 
+  const handleInviteCreated = (invite: TeamInvite) => {
+    setTeamInvite(invite)
+  }
+
+  const handleCloseInviteModal = () => {
+    setShowInviteModal(false)
+    onRegistrationComplete()
+    onClose()
+  }
+
   const renderProfileStep = () => (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold text-slate-100 mb-4">Complete Your Profile</h3>
+      <h3 className="text-xl font-semibold text-slate-100 mb-4">Personal Information</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Phone *</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
+          <input
+            type="text"
+            value={userName}
+            disabled
+            className="w-full px-3 py-2 border border-slate-600 bg-slate-700/50 text-slate-400 rounded-md focus:outline-none"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+          <input
+            type="email"
+            value={userEmail}
+            disabled
+            className="w-full px-3 py-2 border border-slate-600 bg-slate-700/50 text-slate-400 rounded-md focus:outline-none"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
           <input
             type="tel"
             value={profileForm.phone}
             onChange={(e) => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
             className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Your phone number"
-            required
+            placeholder="Enter your phone number"
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">College/University *</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">College/University</label>
           <input
             type="text"
             value={profileForm.college}
             onChange={(e) => setProfileForm(prev => ({ ...prev, college: e.target.value }))}
             className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Your college or university"
-            required
+            placeholder="Enter your college/university"
           />
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Course</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Course/Degree</label>
           <input
             type="text"
             value={profileForm.course}
             onChange={(e) => setProfileForm(prev => ({ ...prev, course: e.target.value }))}
             className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="e.g., Computer Science"
+            placeholder="E.g., B.Tech Computer Science"
           />
         </div>
         
@@ -256,164 +315,79 @@ const RegistrationModal = ({ event, userEmail, userName, onClose, onRegistration
           </select>
         </div>
       </div>
-      
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Skills</label>
-        <div className="flex gap-2 mb-2">
-          <input
-            type="text"
-            value={newSkill}
-            onChange={(e) => setNewSkill(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
-            className="flex-1 px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Add a skill"
-          />
-          <button
-            type="button"
-            onClick={handleAddSkill}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Add
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {profileForm.skills.map((skill, index) => (
-            <span
-              key={index}
-              className="px-3 py-1 bg-blue-900/30 text-blue-300 rounded-full text-sm flex items-center gap-2"
-            >
-              {skill}
-              <button
-                type="button"
-                onClick={() => handleRemoveSkill(skill)}
-                className="text-blue-300 hover:text-blue-100"
-              >
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">GitHub</label>
-          <input
-            type="url"
-            value={profileForm.github}
-            onChange={(e) => setProfileForm(prev => ({ ...prev, github: e.target.value }))}
-            className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="https://github.com/yourusername"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">LinkedIn</label>
-          <input
-            type="url"
-            value={profileForm.linkedin}
-            onChange={(e) => setProfileForm(prev => ({ ...prev, linkedin: e.target.value }))}
-            className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="https://linkedin.com/in/yourusername"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Portfolio</label>
-          <input
-            type="url"
-            value={profileForm.portfolio}
-            onChange={(e) => setProfileForm(prev => ({ ...prev, portfolio: e.target.value }))}
-            className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="https://yourportfolio.com"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Bio</label>
-          <textarea
-            value={profileForm.bio}
-            onChange={(e) => setProfileForm(prev => ({ ...prev, bio: e.target.value }))}
-            rows={3}
-            className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Tell us about yourself..."
-          />
-        </div>
-      </div>
     </div>
   )
 
   const renderTeamStep = () => (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold text-slate-100 mb-4">Team Information</h3>
-      
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Team Name (Optional)</label>
-        <input
-          type="text"
-          value={teamForm.teamName}
-          onChange={(e) => setTeamForm(prev => ({ ...prev, teamName: e.target.value }))}
-          className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          placeholder="Leave empty if participating solo"
-        />
-      </div>
-      
-      {teamForm.teamName && (
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <label className="block text-sm font-medium text-slate-300">Team Members</label>
-            <button
-              type="button"
-              onClick={handleAddTeamMember}
-              className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-            >
-              Add Member
-            </button>
+      <div className="mb-6">
+        <div className="text-sm font-medium text-slate-300 mb-3">How would you like to participate?</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div 
+            onClick={() => setTeamOption('solo')}
+            className={`border ${teamOption === 'solo' ? 'border-blue-500 bg-blue-900/20' : 'border-slate-600 bg-slate-700/50'} rounded-lg p-4 cursor-pointer hover:border-blue-400 transition-colors`}
+          >
+            <div className="font-medium text-slate-100 mb-1">Participate Solo</div>
+            <div className="text-xs text-slate-400">Register as an individual participant</div>
           </div>
           
-          <div className="space-y-4">
-            {teamForm.teamMembers.map((member, index) => (
-              <div key={index} className="border border-slate-600 rounded-lg p-4 bg-slate-700/50">
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="text-sm font-medium text-slate-300">Member {index + 1}</h4>
-                  {teamForm.teamMembers.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTeamMember(index)}
-                      className="text-red-400 hover:text-red-300 text-sm"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <input
-                    type="text"
-                    value={member.name}
-                    onChange={(e) => handleTeamMemberChange(index, 'name', e.target.value)}
-                    className="px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Name"
-                  />
-                  <input
-                    type="email"
-                    value={member.email}
-                    onChange={(e) => handleTeamMemberChange(index, 'email', e.target.value)}
-                    className="px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Email"
-                  />
-                  <input
-                    type="text"
-                    value={member.role}
-                    onChange={(e) => handleTeamMemberChange(index, 'role', e.target.value)}
-                    className="px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Role (e.g., Developer)"
-                  />
-                </div>
-              </div>
-            ))}
+          <div 
+            onClick={() => setTeamOption('create')}
+            className={`border ${teamOption === 'create' ? 'border-blue-500 bg-blue-900/20' : 'border-slate-600 bg-slate-700/50'} rounded-lg p-4 cursor-pointer hover:border-blue-400 transition-colors`}
+          >
+            <div className="font-medium text-slate-100 mb-1">Create a Team</div>
+            <div className="text-xs text-slate-400">Start a new team and invite others</div>
+          </div>
+          
+          <div 
+            onClick={() => setTeamOption('join')}
+            className={`border ${teamOption === 'join' ? 'border-blue-500 bg-blue-900/20' : 'border-slate-600 bg-slate-700/50'} rounded-lg p-4 cursor-pointer hover:border-blue-400 transition-colors`}
+          >
+            <div className="font-medium text-slate-100 mb-1">Join a Team</div>
+            <div className="text-xs text-slate-400">Join an existing team with an invite code</div>
           </div>
         </div>
+      </div>
+      
+      {teamOption === 'join' && (
+        <div className="border border-slate-600 rounded-lg p-4 bg-slate-700/50">
+          <label className="block text-sm font-medium text-slate-300 mb-2">Enter Team Invite Code</label>
+          <input
+            type="text"
+            value={inviteCode}
+            onChange={(e) => setInviteCode(e.target.value)}
+            className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Enter the invite code provided by the team creator"
+          />
+          <div className="text-xs text-slate-400 mt-2">
+            The team creator will provide you with an invite code. Enter it here to join their team.  
+          </div>
+        </div>
+      )}
+      
+      {teamOption === 'create' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Team Name</label>
+            <input
+              type="text"
+              value={teamForm.teamName}
+              onChange={(e) => setTeamForm(prev => ({ ...prev, teamName: e.target.value }))}
+              className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter your team name"
+            />
+          </div>
+          
+          {teamForm.teamName && (
+            <div className="border border-slate-600 rounded-lg p-4 bg-slate-700/50">
+              <div className="text-sm text-slate-300 mb-2">
+                <p className="font-medium">Team members will join using invite code</p>
+                <p className="text-xs text-slate-400 mt-1">After creating your team, you'll receive an invite code that you can share with your team members.</p>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
@@ -478,10 +452,23 @@ const RegistrationModal = ({ event, userEmail, userName, onClose, onRegistration
             <span className="text-slate-400">Event Date:</span>
             <span className="text-slate-100 ml-2">{new Date(event.timeline.eventStart).toLocaleDateString()}</span>
           </div>
-          {teamForm.teamName && (
+          {teamOption === 'create' && teamForm.teamName && (
             <div>
               <span className="text-slate-400">Team Name:</span>
               <span className="text-slate-100 ml-2">{teamForm.teamName}</span>
+              <span className="text-green-400 ml-2">(Creating New Team)</span>
+            </div>
+          )}
+          {teamOption === 'join' && inviteCode && (
+            <div>
+              <span className="text-slate-400">Joining Team:</span>
+              <span className="text-slate-100 ml-2">With invite code {inviteCode}</span>
+            </div>
+          )}
+          {teamOption === 'solo' && (
+            <div>
+              <span className="text-slate-400">Participation:</span>
+              <span className="text-slate-100 ml-2">Individual (Solo)</span>
             </div>
           )}
         </div>
@@ -502,6 +489,16 @@ const RegistrationModal = ({ event, userEmail, userName, onClose, onRegistration
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-slate-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-700">
+        {/* Team Invite Modal */}
+        {showInviteModal && teamForm.teamName && (
+          <TeamInviteModal
+            eventId={event.id!}
+            teamName={teamForm.teamName}
+            creatorEmail={userEmail}
+            onClose={handleCloseInviteModal}
+            onInviteCreated={handleInviteCreated}
+          />
+        )}
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <h2 className="text-xl font-bold text-slate-100">Register for {event.title}</h2>

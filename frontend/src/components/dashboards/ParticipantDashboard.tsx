@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Event } from '../../lib/eventService'
 import { submissionService, RoundSubmission } from '../../lib/submissionService'
+import { teamInviteService, TeamInvite } from '../../lib/teamInviteService'
 import RegistrationModal from '../RegistrationModal'
 import EventCommunication from '../EventCommunication'
 import SubmissionForm from '../SubmissionForm'
 import ParticipantCertificates from '../ParticipantCertificates'
 import SubmissionDeadlineTracker from '../SubmissionDeadlineTracker'
 import SubmissionStatusCard from '../SubmissionStatusCard'
+import TeamInviteModal from '../TeamInviteModal'
 
 interface User {
   email: string
@@ -31,6 +33,8 @@ const ParticipantDashboard = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [showCommunication, setShowCommunication] = useState<string | null>(null)
   const [showCertificates, setShowCertificates] = useState(false)
+  const [teamInvites, setTeamInvites] = useState<TeamInvite[]>([])
+  const [showTeamInviteModal, setShowTeamInviteModal] = useState<{eventId: string, teamName: string} | null>(null)
   
   // Submission-related state
   const [submissionForm, setSubmissionForm] = useState<{event: Event, round: any} | null>(null)
@@ -66,6 +70,22 @@ const ParticipantDashboard = () => {
       })
     }
   }, [registeredEventsDetails, user])
+  
+  // Load team invites
+  useEffect(() => {
+    const loadTeamInvites = async () => {
+      if (user?.email) {
+        try {
+          const invites = await teamInviteService.getTeamInvitesByCreator(user.email)
+          setTeamInvites(invites)
+        } catch (error) {
+          console.error('Error loading team invites:', error)
+        }
+      }
+    }
+    
+    loadTeamInvites()
+  }, [user, refreshTrigger])
 
   const loadUserRegistrations = async (email: string) => {
     try {
@@ -257,6 +277,23 @@ const ParticipantDashboard = () => {
     setRefreshTrigger(prev => prev + 1)
     alert('Registration successful! You will receive a confirmation email shortly.')
   }
+  
+  const handleCreateTeamInvite = (eventId: string, teamName: string) => {
+    setShowTeamInviteModal({ eventId, teamName })
+  }
+  
+  const handleInviteCreated = (invite: TeamInvite) => {
+    setTeamInvites(prev => [invite, ...prev])
+  }
+  
+  const handleRevokeInvite = async (inviteId: string) => {
+    try {
+      await teamInviteService.revokeTeamInvite(inviteId)
+      setTeamInvites(prev => prev.filter(invite => invite.id !== inviteId))
+    } catch (error) {
+      console.error('Error revoking invite:', error)
+    }
+  }
 
   const handleRegisterClick = (event: Event) => {
     setRegistrationEvent(event)
@@ -279,6 +316,15 @@ const ParticipantDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-900">
+      {showTeamInviteModal && (
+        <TeamInviteModal
+          eventId={showTeamInviteModal.eventId}
+          teamName={showTeamInviteModal.teamName}
+          creatorEmail={user?.email || ''}
+          onClose={() => setShowTeamInviteModal(null)}
+          onInviteCreated={handleInviteCreated}
+        />
+      )}
       {/* Navigation */}
       <nav className="bg-slate-800 shadow-sm border-b border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -561,18 +607,71 @@ const ParticipantDashboard = () => {
         {/* Recent Activity */}
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-6">
           <h2 className="text-xl font-semibold text-slate-100 mb-4">Recent Activity</h2>
-          <div className="space-y-3">
-            {[
-              { action: 'Joined AI Innovation Challenge', time: '2 hours ago' },
-              { action: 'Submitted project to Blockchain Hackathon', time: '1 day ago' },
-              { action: 'Added new team member to Eco Warriors', time: '3 days ago' },
-              { action: 'Registered for Green Tech Challenge', time: '1 week ago' },
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center justify-between py-2 border-b border-slate-600 last:border-b-0">
-                <span className="text-slate-100">{activity.action}</span>
-                <span className="text-sm text-slate-400">{activity.time}</span>
+          {/* Team Invites Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-slate-100">Your Team Invites</h3>
+            
+            {teamInvites.length === 0 ? (
+              <p className="text-slate-400">You haven't created any team invites yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {teamInvites.map((invite) => (
+                  <div key={invite.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                    <div className="mb-2 sm:mb-0">
+                      <div className="text-slate-100 font-medium">{invite.teamName}</div>
+                      <div className="text-sm text-slate-400">Expires: {invite.expiresAt.toLocaleDateString()}</div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(teamInviteService.getInviteUrl(invite.inviteCode))
+                          alert('Invite link copied to clipboard!')
+                        }}
+                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                      >
+                        Copy Link
+                      </button>
+                      {invite.status === 'active' && (
+                        <button
+                          onClick={() => handleRevokeInvite(invite.id!)}
+                          className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                        >
+                          Revoke
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
+            
+            <div className="pt-4">
+              <h3 className="text-lg font-semibold text-slate-100 mb-3">Your Teams</h3>
+              <div className="space-y-3">
+                {registeredEventsDetails
+                  .filter(event => event.registrationData?.teamName)
+                  .map((event) => (
+                    <div key={event.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                      <div>
+                        <div className="text-slate-100 font-medium">{event.registrationData.teamName}</div>
+                        <div className="text-sm text-slate-400">{event.title}</div>
+                      </div>
+                      <div className="mt-2 sm:mt-0">
+                        <button
+                          onClick={() => handleCreateTeamInvite(event.id!, event.registrationData.teamName!)}
+                          className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                        >
+                          Invite Members
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                {registeredEventsDetails.filter(event => event.registrationData?.teamName).length === 0 && (
+                  <p className="text-slate-400">You haven't created any teams yet.</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
