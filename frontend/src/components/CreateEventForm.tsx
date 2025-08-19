@@ -19,7 +19,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
     title: '',
     description: '',
     theme: '',
-    eventType: 'online' as const,
+    eventType: 'online' as 'online' | 'offline' | 'hybrid',
     location: '',
     maxParticipants: 100,
     registrationFee: 0,
@@ -31,7 +31,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
       submissionDeadline: ''
     },
     contactEmail: '',
-    status: 'published' as const,
+    status: 'published' as 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled',
     // Default empty arrays for required fields
     tracks: [] as string[],
     rules: [] as string[],
@@ -39,7 +39,8 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
     eligibility: [] as string[],
     prizes: [] as any[],
     sponsors: [] as any[],
-    judgingCriteria: [] as any[]
+    judgingCriteria: [] as any[],
+    rounds: [] as any[]
   })
 
   // Initialize form data for editing
@@ -50,7 +51,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
         description: editingEvent.description,
         theme: editingEvent.theme,
         eventType: editingEvent.eventType,
-        location: editingEvent.location,
+        location: editingEvent.location || '',
         maxParticipants: editingEvent.maxParticipants,
         registrationFee: editingEvent.registrationFee,
         timeline: {
@@ -68,7 +69,18 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
         eligibility: editingEvent.eligibility || [],
         prizes: editingEvent.prizes || [],
         sponsors: editingEvent.sponsors || [],
-        judgingCriteria: editingEvent.judgingCriteria || []
+        judgingCriteria: editingEvent.judgingCriteria || [],
+        rounds: editingEvent.rounds?.map(round => ({
+          id: round.id,
+          name: round.name,
+          description: round.description,
+          startDate: new Date(round.startDate).toISOString().slice(0, 16),
+          endDate: new Date(round.endDate).toISOString().slice(0, 16),
+          submissionDeadline: new Date(round.submissionDeadline).toISOString().slice(0, 16),
+          requirements: round.requirements,
+          maxParticipants: round.maxParticipants?.toString() || '',
+          eliminationCriteria: round.eliminationCriteria || ''
+        })) || []
       })
     }
   }, [editingEvent])
@@ -131,6 +143,19 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
       // Dynamic import to avoid SSR issues
       const { eventService } = await import('@/lib/eventService')
       
+      // Process rounds with date conversion
+      const processedRounds = formData.rounds.map((round: any) => ({
+        id: round.id,
+        name: round.name,
+        description: round.description,
+        startDate: round.startDate ? new Date(round.startDate) : new Date(),
+        endDate: round.endDate ? new Date(round.endDate) : new Date(),
+        submissionDeadline: round.submissionDeadline ? new Date(round.submissionDeadline) : new Date(),
+        requirements: round.requirements,
+        maxParticipants: round.maxParticipants ? parseInt(round.maxParticipants) : undefined,
+        eliminationCriteria: round.eliminationCriteria
+      }))
+      
       const eventData = {
         ...formData,
         timeline: timelineDates,
@@ -142,10 +167,11 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
         eligibility: formData.eligibility || [],
         prizes: formData.prizes || [],
         sponsors: formData.sponsors || [],
-        judgingCriteria: formData.judgingCriteria || []
+        judgingCriteria: formData.judgingCriteria || [],
+        rounds: processedRounds
       }
 
-      if (editingEvent) {
+      if (editingEvent && editingEvent.id) {
         // Update existing event
         await eventService.updateEvent(editingEvent.id, eventData)
       } else {
@@ -354,6 +380,183 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                 />
               </div>
             </div>
+          </div>
+
+          {/* Hackathon Rounds */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-100">Hackathon Rounds</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  const newRound = {
+                    id: Date.now().toString(),
+                    name: '',
+                    description: '',
+                    startDate: '',
+                    endDate: '',
+                    submissionDeadline: '',
+                    requirements: '',
+                    maxParticipants: '',
+                    eliminationCriteria: ''
+                  }
+                  setFormData(prev => ({
+                    ...prev,
+                    rounds: [...prev.rounds, newRound]
+                  }))
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+              >
+                Add Round
+              </button>
+            </div>
+            
+            {formData.rounds.length === 0 ? (
+              <div className="text-center py-8 border-2 border-dashed border-slate-600 rounded-lg">
+                <p className="text-slate-400">No rounds added yet. Click "Add Round" to create your first hackathon round.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {formData.rounds.map((round: any, index: number) => (
+                  <div key={round.id} className="border border-slate-600 rounded-lg p-4 bg-slate-700/30">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="text-md font-medium text-slate-100">Round {index + 1}</h4>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            rounds: prev.rounds.filter((_: any, i: number) => i !== index)
+                          }))
+                        }}
+                        className="text-red-400 hover:text-red-300 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Round Name *</label>
+                        <input
+                          type="text"
+                          value={round.name}
+                          onChange={(e) => {
+                            const updatedRounds = [...formData.rounds]
+                            updatedRounds[index] = { ...round, name: e.target.value }
+                            setFormData(prev => ({ ...prev, rounds: updatedRounds }))
+                          }}
+                          placeholder="e.g., Ideation Round, Prototype Round, Final Round"
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Max Participants</label>
+                        <input
+                          type="number"
+                          value={round.maxParticipants}
+                          onChange={(e) => {
+                            const updatedRounds = [...formData.rounds]
+                            updatedRounds[index] = { ...round, maxParticipants: e.target.value }
+                            setFormData(prev => ({ ...prev, rounds: updatedRounds }))
+                          }}
+                          placeholder="Leave empty for no limit"
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Description</label>
+                        <textarea
+                          value={round.description}
+                          onChange={(e) => {
+                            const updatedRounds = [...formData.rounds]
+                            updatedRounds[index] = { ...round, description: e.target.value }
+                            setFormData(prev => ({ ...prev, rounds: updatedRounds }))
+                          }}
+                          placeholder="Describe what participants need to do in this round..."
+                          rows={3}
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Round Start *</label>
+                        <input
+                          type="datetime-local"
+                          value={round.startDate}
+                          onChange={(e) => {
+                            const updatedRounds = [...formData.rounds]
+                            updatedRounds[index] = { ...round, startDate: e.target.value }
+                            setFormData(prev => ({ ...prev, rounds: updatedRounds }))
+                          }}
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Round End *</label>
+                        <input
+                          type="datetime-local"
+                          value={round.endDate}
+                          onChange={(e) => {
+                            const updatedRounds = [...formData.rounds]
+                            updatedRounds[index] = { ...round, endDate: e.target.value }
+                            setFormData(prev => ({ ...prev, rounds: updatedRounds }))
+                          }}
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Submission Deadline *</label>
+                        <input
+                          type="datetime-local"
+                          value={round.submissionDeadline}
+                          onChange={(e) => {
+                            const updatedRounds = [...formData.rounds]
+                            updatedRounds[index] = { ...round, submissionDeadline: e.target.value }
+                            setFormData(prev => ({ ...prev, rounds: updatedRounds }))
+                          }}
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Requirements</label>
+                        <input
+                          type="text"
+                          value={round.requirements}
+                          onChange={(e) => {
+                            const updatedRounds = [...formData.rounds]
+                            updatedRounds[index] = { ...round, requirements: e.target.value }
+                            setFormData(prev => ({ ...prev, rounds: updatedRounds }))
+                          }}
+                          placeholder="e.g., PPT submission, Working prototype, Demo video"
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Elimination Criteria</label>
+                        <textarea
+                          value={round.eliminationCriteria}
+                          onChange={(e) => {
+                            const updatedRounds = [...formData.rounds]
+                            updatedRounds[index] = { ...round, eliminationCriteria: e.target.value }
+                            setFormData(prev => ({ ...prev, rounds: updatedRounds }))
+                          }}
+                          placeholder="Describe how participants will be eliminated or selected for the next round..."
+                          rows={2}
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}

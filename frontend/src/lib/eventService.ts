@@ -56,6 +56,17 @@ export interface Event {
     criteria: string
     weight: number
   }[]
+  rounds?: {
+    id: string
+    name: string
+    description: string
+    startDate: Date
+    endDate: Date
+    submissionDeadline: Date
+    requirements: string
+    maxParticipants?: number
+    eliminationCriteria?: string
+  }[]
 }
 
 export interface UserProfile {
@@ -111,6 +122,29 @@ const EVENTS_COLLECTION = 'events'
 const REGISTRATIONS_COLLECTION = 'registrations'
 const PROFILES_COLLECTION = 'profiles'
 
+// Utility function to remove undefined values from objects
+const cleanObjectForFirestore = (obj: any): any => {
+  if (obj === null || obj === undefined) {
+    return null
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(cleanObjectForFirestore).filter(item => item !== null && item !== undefined)
+  }
+  
+  if (typeof obj === 'object' && obj.constructor === Object) {
+    const cleaned: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined && value !== null && value !== '') {
+        cleaned[key] = cleanObjectForFirestore(value)
+      }
+    }
+    return cleaned
+  }
+  
+  return obj
+}
+
 export const eventService = {
   // Create a new event
   async createEvent(eventData: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
@@ -138,13 +172,23 @@ export const eventService = {
           eventEnd: validateDate(eventData.timeline.eventEnd, 'eventEnd'),
           submissionDeadline: validateDate(eventData.timeline.submissionDeadline, 'submissionDeadline')
         },
+        // Process rounds and convert dates to Timestamps
+        rounds: eventData.rounds?.map(round => ({
+          ...round,
+          startDate: validateDate(round.startDate, `round ${round.name} startDate`),
+          endDate: validateDate(round.endDate, `round ${round.name} endDate`),
+          submissionDeadline: validateDate(round.submissionDeadline, `round ${round.name} submissionDeadline`)
+        })) || [],
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       }
       
-      console.log('Firestore data to be saved:', firestoreData)
+      // Clean the data to remove undefined values
+      const cleanedData = cleanObjectForFirestore(firestoreData)
       
-      const docRef = await addDoc(collection(db, EVENTS_COLLECTION), firestoreData)
+      console.log('Cleaned Firestore data to be saved:', cleanedData)
+      
+      const docRef = await addDoc(collection(db, EVENTS_COLLECTION), cleanedData)
       
       console.log('Event created successfully with ID:', docRef.id)
       return docRef.id
@@ -306,10 +350,52 @@ export const eventService = {
   async updateEvent(eventId: string, updates: Partial<Event>): Promise<void> {
     try {
       const eventRef = doc(db, EVENTS_COLLECTION, eventId)
-      await updateDoc(eventRef, {
-        ...updates,
+      
+      // Process the updates to handle dates and clean undefined values
+      const processedUpdates: any = { ...updates }
+      
+      // Convert timeline dates if present
+      if (processedUpdates.timeline) {
+        const validateDate = (date: Date, fieldName: string) => {
+          if (!date || isNaN(date.getTime())) {
+            throw new Error(`Invalid date for ${fieldName}`)
+          }
+          return Timestamp.fromDate(date)
+        }
+        
+        processedUpdates.timeline = {
+          registrationStart: validateDate(processedUpdates.timeline.registrationStart, 'registrationStart'),
+          registrationEnd: validateDate(processedUpdates.timeline.registrationEnd, 'registrationEnd'),
+          eventStart: validateDate(processedUpdates.timeline.eventStart, 'eventStart'),
+          eventEnd: validateDate(processedUpdates.timeline.eventEnd, 'eventEnd'),
+          submissionDeadline: validateDate(processedUpdates.timeline.submissionDeadline, 'submissionDeadline')
+        }
+      }
+      
+      // Convert rounds dates if present
+      if (processedUpdates.rounds) {
+        const validateDate = (date: Date, fieldName: string) => {
+          if (!date || isNaN(date.getTime())) {
+            throw new Error(`Invalid date for ${fieldName}`)
+          }
+          return Timestamp.fromDate(date)
+        }
+        
+        processedUpdates.rounds = processedUpdates.rounds.map((round: any) => ({
+          ...round,
+          startDate: validateDate(round.startDate, `round ${round.name} startDate`),
+          endDate: validateDate(round.endDate, `round ${round.name} endDate`),
+          submissionDeadline: validateDate(round.submissionDeadline, `round ${round.name} submissionDeadline`)
+        }))
+      }
+      
+      // Clean the data and add update timestamp
+      const cleanedUpdates = cleanObjectForFirestore({
+        ...processedUpdates,
         updatedAt: Timestamp.now(),
       })
+      
+      await updateDoc(eventRef, cleanedUpdates)
     } catch (error) {
       console.error('Error updating event:', error)
       throw error
