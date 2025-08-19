@@ -27,6 +27,9 @@ const EventCommunication = ({
   const [sendingMessage, setSendingMessage] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const [isAtBottom, setIsAtBottom] = useState(true)
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false)
 
   useEffect(() => {
     loadChannels()
@@ -40,7 +43,13 @@ const EventCommunication = ({
         activeChannel,
         (newMessages) => {
           setMessages(newMessages)
-          scrollToBottom()
+          // Only auto-scroll if user is near the bottom (so we don't yank them while reading)
+          if (isAtBottom) {
+            scrollToBottom()
+            setShowJumpToLatest(false)
+          } else {
+            setShowJumpToLatest(true)
+          }
         }
       )
 
@@ -49,7 +58,13 @@ const EventCommunication = ({
   }, [eventId, activeChannel])
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // Scroll the messages container to the bottom smoothly
+    const container = messagesContainerRef.current
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   const loadChannels = async () => {
@@ -63,6 +78,42 @@ const EventCommunication = ({
       console.error('Error loading channels:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Track scroll position to determine whether to auto-scroll on new messages
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+
+    const onScroll = () => {
+      const threshold = 120 // px from bottom
+      const atBottom = container.scrollHeight - (container.scrollTop + container.clientHeight) < threshold
+      setIsAtBottom(atBottom)
+      if (atBottom) setShowJumpToLatest(false)
+    }
+
+    container.addEventListener('scroll', onScroll)
+    // initialize
+    onScroll()
+
+    return () => container.removeEventListener('scroll', onScroll)
+  }, [messagesContainerRef.current])
+
+  // Keyboard navigation: arrow up/down to switch channels when messages area is focused
+  const handleMessagesKeyDown = (e: React.KeyboardEvent) => {
+    if (!channels || channels.length === 0) return
+    const idx = channels.findIndex((c) => c.type === activeChannel)
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      const next = Math.max(0, idx - 1)
+      setActiveChannel(channels[next].type)
+      setTimeout(() => setIsAtBottom(true), 50)
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      const next = Math.min(channels.length - 1, idx + 1)
+      setActiveChannel(channels[next].type)
+      setTimeout(() => setIsAtBottom(true), 50)
     }
   }
 
@@ -231,7 +282,7 @@ const EventCommunication = ({
         {/* Messages Area */}
         <div className="flex-1 flex flex-col">
           {/* Chat Header */}
-          <div className="p-4 border-b border-gray-200 bg-slate-50">
+          <div className="p-4 border-b border-gray-200 bg-slate-50 sticky top-0 z-20">
             <h4 className="font-semibold text-gray-900">
               {getChannelIcon(activeChannel)} {channels.find(c => c.type === activeChannel)?.name}
             </h4>
@@ -244,7 +295,12 @@ const EventCommunication = ({
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div
+            ref={messagesContainerRef}
+            tabIndex={0}
+            onKeyDown={handleMessagesKeyDown}
+            className="flex-1 overflow-y-auto p-4 space-y-4 bg-white"
+          >
             {messages.map((message, index) => {
               const showDate = index === 0 || 
                 formatDate(message.timestamp) !== formatDate(messages[index - 1]?.timestamp)
@@ -315,11 +371,27 @@ const EventCommunication = ({
               )
             })}
             <div ref={messagesEndRef} />
+            {/* Jump to latest button */}
+            {showJumpToLatest && (
+              <div className="fixed right-6 bottom-28 z-50">
+                <button
+                  onClick={() => {
+                    scrollToBottom()
+                    setShowJumpToLatest(false)
+                    setIsAtBottom(true)
+                  }}
+                  className="px-3 py-2 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700"
+                  aria-label="Jump to latest messages"
+                >
+                  ⤓ New
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Message Input */}
           {canSendMessage() && (
-            <div className="p-4 border-t border-gray-200 bg-slate-50">
+            <div className="p-4 border-t border-gray-200 bg-slate-50 sticky bottom-0 z-20">
               {error && (
                 <div className="mb-2 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm">
                   {error}
