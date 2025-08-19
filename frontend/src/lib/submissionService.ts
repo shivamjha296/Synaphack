@@ -110,6 +110,7 @@ export const submissionService = {
           updatedAt: Timestamp.now()
         })
         
+        console.log('Creating new submission with data:', firestoreData)
         const docRef = await addDoc(collection(db, SUBMISSIONS_COLLECTION), firestoreData)
         console.log('Submission created with ID:', docRef.id)
         return docRef.id
@@ -158,8 +159,69 @@ export const submissionService = {
       })
       
       await updateDoc(submissionRef, cleanedUpdates)
+
+      // Auto-generate certificate if submission is approved
+      if (updates.status === 'approved') {
+        try {
+          // Get the full submission data
+          const submissionDoc = await getDoc(submissionRef)
+          if (submissionDoc.exists()) {
+            const submission = submissionDoc.data() as RoundSubmission
+            await this.generateCertificateForApprovedSubmission(submission)
+          }
+        } catch (certError) {
+          console.error('Error generating certificate:', certError)
+          // Don't throw - submission update should still succeed
+        }
+      }
     } catch (error) {
       console.error('Error updating submission:', error)
+      throw error
+    }
+  },
+
+  // Auto-generate certificate for approved submission
+  async generateCertificateForApprovedSubmission(submission: RoundSubmission): Promise<void> {
+    try {
+      // Dynamic import to avoid circular dependency
+      const { certificateService } = await import('./certificateService')
+      
+      // Get event details
+      const eventDoc = await getDoc(doc(db, 'events', submission.eventId))
+      if (!eventDoc.exists()) {
+        console.error('Event not found for certificate generation')
+        return
+      }
+      
+      const event = eventDoc.data()
+      
+      // Determine certificate type based on score/achievement
+      let certificateType: 'completion' | 'achievement' | 'winner' = 'completion'
+      let additionalData: any = {
+        score: submission.score,
+        teamName: submission.teamName
+      }
+      
+      // If there's a high score or special recognition, upgrade to achievement
+      if (submission.score && submission.score >= 80) {
+        certificateType = 'achievement'
+        additionalData.specialMention = 'High Achievement'
+      }
+      
+      // Generate the certificate
+      await certificateService.generateCertificate(
+        submission.eventId,
+        submission.participantEmail,
+        submission.participantName,
+        submission.participantEmail,
+        event.title,
+        certificateType,
+        additionalData
+      )
+      
+      console.log(`Certificate generated for ${submission.participantName} - ${event.title}`)
+    } catch (error) {
+      console.error('Error in auto-certificate generation:', error)
       throw error
     }
   },
@@ -197,6 +259,7 @@ export const submissionService = {
   // Get all submissions for an event (organizer view)
   async getEventSubmissions(eventId: string): Promise<RoundSubmission[]> {
     try {
+      console.log('Getting submissions for event:', eventId)
       // Simplified query without orderBy for now
       const q = query(
         collection(db, SUBMISSIONS_COLLECTION),
@@ -204,19 +267,28 @@ export const submissionService = {
       )
       const querySnapshot = await getDocs(q)
       
-      const submissions = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        submittedAt: doc.data().submittedAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate()
-      })) as RoundSubmission[]
+      console.log('Raw query results:', querySnapshot.size, 'documents')
+      
+      const submissions = querySnapshot.docs.map(doc => {
+        const data = doc.data()
+        console.log('Processing submission doc:', doc.id, data)
+        return {
+          id: doc.id,
+          ...data,
+          submittedAt: data.submittedAt?.toDate(),
+          updatedAt: data.updatedAt?.toDate()
+        }
+      }) as RoundSubmission[]
       
       // Sort in memory instead of using orderBy
-      return submissions.sort((a, b) => {
+      const sortedSubmissions = submissions.sort((a, b) => {
         const dateA = a.submittedAt || new Date(0)
         const dateB = b.submittedAt || new Date(0)
         return dateB.getTime() - dateA.getTime()
       })
+      
+      console.log('Final processed submissions:', sortedSubmissions)
+      return sortedSubmissions
     } catch (error) {
       console.error('Error getting event submissions:', error)
       throw error

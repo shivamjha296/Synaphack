@@ -25,7 +25,9 @@ const SubmissionViewer = ({ event, onClose }: SubmissionViewerProps) => {
 
   const loadSubmissions = async () => {
     try {
+      console.log('Loading submissions for event:', event.id)
       const eventSubmissions = await submissionService.getEventSubmissions(event.id!)
+      console.log('Found submissions:', eventSubmissions)
       setSubmissions(eventSubmissions)
     } catch (error) {
       console.error('Error loading submissions:', error)
@@ -115,12 +117,23 @@ const SubmissionViewer = ({ event, onClose }: SubmissionViewerProps) => {
             <h2 className="text-2xl font-bold text-slate-100">Event Submissions</h2>
             <p className="text-slate-300 mt-1">{event.title}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-100 text-2xl"
-          >
-            ×
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => {
+                loadSubmissions()
+                loadStats()
+              }}
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
+            >
+              🔄 Refresh
+            </button>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-100 text-2xl"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {/* Stats Overview */}
@@ -172,16 +185,25 @@ const SubmissionViewer = ({ event, onClose }: SubmissionViewerProps) => {
         <div className="flex-1 overflow-y-auto">
           {filteredSubmissions.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-slate-700 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <div className="w-8 h-8 bg-slate-600 rounded"></div>
+              <div className="w-16 h-16 bg-slate-700 rounded-lg mx-auto mb-4 flex items-center justify-center text-2xl">
+                📝
               </div>
               <h3 className="text-lg font-medium text-slate-100 mb-2">No submissions yet</h3>
-              <p className="text-slate-400">
+              <p className="text-slate-400 mb-4">
                 {selectedRound === 'all' 
-                  ? 'No submissions have been made for this event'
+                  ? 'No submissions have been made for this event yet. Participants can submit through their dashboard.'
                   : 'No submissions for the selected round'
                 }
               </p>
+              <button
+                onClick={() => {
+                  loadSubmissions()
+                  loadStats()
+                }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              >
+                🔄 Check for New Submissions
+              </button>
             </div>
           ) : (
             <div className="p-6">

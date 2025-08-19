@@ -82,6 +82,42 @@ service cloud.firestore {
       allow create, update: if request.auth != null;
     }
     
+    // Certificates collection
+    match /certificates/{certificateId} {
+      // Allow read access to authenticated users (for verification)
+      allow read: if request.auth != null;
+      
+      // Allow create by system/organizers (automatic generation)
+      allow create: if request.auth != null;
+      
+      // Allow update by organizers only
+      allow update: if request.auth != null;
+      
+      // Prevent deletion of certificates for audit purposes
+      allow delete: if false;
+    }
+    
+    // Certificate templates collection
+    match /certificateTemplates/{templateId} {
+      // Allow read access to authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create/update by organizers
+      allow create, update: if request.auth != null;
+    }
+    
+    // Submissions collection
+    match /submissions/{submissionId} {
+      // Allow read access to authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create/update by participants and organizers
+      allow create, update: if request.auth != null;
+      
+      // Allow delete by organizers and submission owners
+      allow delete: if request.auth != null;
+    }
+    
     // For development - uncomment the line below to allow all reads/writes
     // match /{document=**} {
     //   allow read, write: if true;

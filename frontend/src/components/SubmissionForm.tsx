@@ -126,6 +126,7 @@ const SubmissionForm = ({
 
       await submissionService.submitForRound(submissionData)
       
+      console.log('Submission completed successfully')
       onSubmissionComplete()
       onClose()
     } catch (err: any) {

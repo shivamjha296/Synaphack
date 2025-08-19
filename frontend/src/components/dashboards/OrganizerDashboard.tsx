@@ -6,6 +6,7 @@ import Link from 'next/link'
 import CreateEventForm from '../CreateEventForm'
 import EventCommunication from '../EventCommunication'
 import SubmissionViewer from '../SubmissionViewer'
+import CertificateManager from '../CertificateManager'
 import { Event } from '../../lib/eventService'
 
 interface User {
@@ -29,6 +30,7 @@ const OrganizerDashboard = () => {
   const [participantsLoading, setParticipantsLoading] = useState<string | null>(null)
   const [showCommunication, setShowCommunication] = useState<string | null>(null)
   const [showSubmissions, setShowSubmissions] = useState<Event | null>(null)
+  const [showCertificates, setShowCertificates] = useState<Event | null>(null)
 
   useEffect(() => {
     // Check if user is logged in and ensure Firebase auth state
@@ -512,6 +514,13 @@ const OrganizerDashboard = () => {
                         >
                           <span>💬</span>
                           <span>Chat</span>
+                        </button>
+                        <button 
+                          onClick={() => setShowCertificates(event)}
+                          className="flex items-center space-x-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-md text-sm font-medium transition-colors"
+                        >
+                          <span>📜</span>
+                          <span>Certificates</span>
                         </button>
                       </div>
                       
@@ -1195,9 +1204,35 @@ const OrganizerDashboard = () => {
         {/* Submissions Viewer Modal */}
         {showSubmissions && (
           <SubmissionViewer
+            key={showSubmissions.id}
             event={showSubmissions}
             onClose={() => setShowSubmissions(null)}
           />
+        )}
+
+        {/* Certificate Manager Modal */}
+        {showCertificates && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg w-full max-w-6xl max-h-[90vh] overflow-hidden">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Certificate Management - {showCertificates.title}
+                </h2>
+                <button
+                  onClick={() => setShowCertificates(null)}
+                  className="text-gray-500 hover:text-gray-700 text-xl"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-6 max-h-[calc(90vh-120px)] overflow-y-auto">
+                <CertificateManager
+                  eventId={showCertificates.id!}
+                  eventTitle={showCertificates.title}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
