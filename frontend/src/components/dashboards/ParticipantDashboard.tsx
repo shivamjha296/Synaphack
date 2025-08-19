@@ -610,6 +610,54 @@ const ParticipantDashboard = () => {
                 </div>
               </div>
 
+              {/* Rounds Information */}
+              {selectedEvent.rounds && selectedEvent.rounds.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-100 mb-3">Hackathon Rounds</h3>
+                  <div className="space-y-4">
+                    {selectedEvent.rounds.map((round, index) => (
+                      <div key={round.id} className="bg-slate-700/50 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-medium text-slate-100">Round {index + 1}: {round.name}</h4>
+                          {round.maxParticipants && (
+                            <span className="text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded">
+                              Max: {round.maxParticipants}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-slate-300 text-sm mb-3">{round.description}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                          <div>
+                            <span className="text-slate-400">Start:</span>
+                            <span className="text-slate-300 ml-1">{new Date(round.startDate).toLocaleDateString()}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">End:</span>
+                            <span className="text-slate-300 ml-1">{new Date(round.endDate).toLocaleDateString()}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Submission:</span>
+                            <span className="text-slate-300 ml-1">{new Date(round.submissionDeadline).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        {round.requirements && (
+                          <div className="mt-2">
+                            <span className="text-slate-400 text-xs">Requirements:</span>
+                            <span className="text-slate-300 text-xs ml-1">{round.requirements}</span>
+                          </div>
+                        )}
+                        {round.eliminationCriteria && (
+                          <div className="mt-2">
+                            <span className="text-slate-400 text-xs">Elimination Criteria:</span>
+                            <span className="text-slate-300 text-xs ml-1">{round.eliminationCriteria}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Contact Information */}
               <div>
                 <h3 className="text-lg font-semibold text-slate-100 mb-3">Contact Information</h3>
