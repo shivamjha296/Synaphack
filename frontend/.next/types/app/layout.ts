@@ -1,4 +1,4 @@
-// File: D:\Desktop\Synaphack\firebase_synaphack\frontend\src\app\layout.tsx
+// File: C:\College_projects\Jha\Synaphack\frontend\src\app\layout.tsx
 import * as entry from '../../../src/app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -7,6 +7,7 @@ import CreateEventForm from '../CreateEventForm'
 import { Event } from '../../lib/eventService'
 
 interface User {
+  uid?: string
   email: string
   name: string
   role: string
@@ -23,13 +24,14 @@ const OrganizerDashboard = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
 
   useEffect(() => {
-    // Check if user is logged in
+    // Check if user is logged in and ensure Firebase auth state
     const userData = localStorage.getItem('user')
     if (userData) {
       const parsedUser = JSON.parse(userData)
       if (parsedUser.role === 'organizer') {
         setUser(parsedUser)
-        loadEvents()
+        // Ensure Firebase auth state is maintained
+        maintainFirebaseAuth(parsedUser)
       } else {
         router.push('/login')
       }
@@ -38,11 +40,42 @@ const OrganizerDashboard = () => {
     }
   }, [router])
 
+  const maintainFirebaseAuth = async (user: any) => {
+    try {
+      const { onAuthStateChanged } = await import('firebase/auth')
+      const { auth } = await import('../../lib/firebase')
+      
+      // Check if user is already authenticated
+      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        if (!firebaseUser) {
+          // User not authenticated with Firebase, redirect to login
+          console.warn('User not authenticated with Firebase, redirecting to login')
+          localStorage.removeItem('user')
+          router.push('/login')
+        }
+      })
+      
+      return unsubscribe
+    } catch (error) {
+      console.error('Error checking Firebase auth:', error)
+    }
+  }
+
+  // Load events when user is set
+  useEffect(() => {
+    if (user) {
+      loadEvents()
+    }
+  }, [user])
+
   const loadEvents = async () => {
+    if (!user) return
+    
     try {
       const { eventService } = await import('../../lib/eventService')
-      const allEvents = await eventService.getAllEvents()
-      setEvents(allEvents)
+      // Only load events created by this organizer
+      const organizerEvents = await eventService.getEventsByOrganizer(user.uid || user.email)
+      setEvents(organizerEvents)
     } catch (error) {
       console.error('Error loading events:', error)
     } finally {
@@ -73,9 +106,18 @@ const OrganizerDashboard = () => {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('user')
-    router.push('/')
+  const handleLogout = async () => {
+    try {
+      const { authService } = await import('../../lib/authService')
+      await authService.signOut()
+      localStorage.removeItem('user')
+      router.push('/')
+    } catch (error) {
+      console.error('Error signing out:', error)
+      // Fallback: just clear localStorage and redirect
+      localStorage.removeItem('user')
+      router.push('/')
+    }
   }
 
   if (!user) {
@@ -339,7 +381,7 @@ const OrganizerDashboard = () => {
         {/* Create/Edit Event Form Modal */}
         {showCreateForm && user && (
           <CreateEventForm
-            organizerId={user.email}
+            organizerId={user.uid || user.email}
             organizerName={user.name}
             editingEvent={editingEvent}
             onClose={() => {

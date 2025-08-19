@@ -10,7 +10,7 @@ import {
   where,
   Timestamp 
 } from 'firebase/firestore'
-import { db } from './firebase'
+import { db, auth } from './firebase'
 
 export interface Event {
   id?: string
@@ -63,8 +63,6 @@ export const eventService = {
   // Create a new event
   async createEvent(eventData: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
-      console.log('Creating event with data:', eventData)
-      
       // Validate required fields
       if (!eventData.title || !eventData.organizerId) {
         throw new Error('Missing required fields: title or organizerId')
@@ -109,6 +107,7 @@ export const eventService = {
     try {
       const q = query(collection(db, EVENTS_COLLECTION), orderBy('createdAt', 'desc'))
       const querySnapshot = await getDocs(q)
+      
       return querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
@@ -165,21 +164,36 @@ export const eventService = {
     }
   },
 
-  // Get published events (for participants)
+  // Get published and ongoing events (for participants)
   async getPublishedEvents(): Promise<Event[]> {
     try {
+      console.log('Getting published events...')
       const q = query(
         collection(db, EVENTS_COLLECTION), 
-        where('status', '==', 'published'),
+        where('status', 'in', ['published', 'ongoing']),
         orderBy('createdAt', 'desc')
       )
       const querySnapshot = await getDocs(q)
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate(),
-      })) as Event[]
+      console.log('Found published events:', querySnapshot.size)
+      
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data()
+        console.log('Published event data:', data)
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate(),
+          updatedAt: data.updatedAt?.toDate(),
+          timeline: {
+            ...data.timeline,
+            registrationStart: data.timeline?.registrationStart?.toDate(),
+            registrationEnd: data.timeline?.registrationEnd?.toDate(),
+            eventStart: data.timeline?.eventStart?.toDate(),
+            eventEnd: data.timeline?.eventEnd?.toDate(),
+            submissionDeadline: data.timeline?.submissionDeadline?.toDate(),
+          }
+        }
+      }) as Event[]
     } catch (error) {
       console.error('Error getting published events:', error)
       throw error

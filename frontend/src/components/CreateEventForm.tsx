@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Event } from '@/models/schemas'
+import { Event } from '@/lib/eventService'
 
 interface CreateEventFormProps {
   onClose: () => void

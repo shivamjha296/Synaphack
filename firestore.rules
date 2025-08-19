@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Events collection
+    match /events/{eventId} {
+      // Allow read access to authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create and update if user is authenticated and is the organizer
+      allow create, update: if request.auth != null 
+        && (request.auth.uid == resource.data.organizerId 
+            || request.auth.uid == request.resource.data.organizerId);
+      
+      // Allow delete if user is the organizer
+      allow delete: if request.auth != null 
+        && request.auth.uid == resource.data.organizerId;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Allow users to read and write their own data
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // For development - uncomment the line below to allow all reads/writes
+    // match /{document=**} {
+    //   allow read, write: if true;
+    // }
+  }
+}
