@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import EventCommunication from '../EventCommunication'
+import { Event } from '../../lib/eventService'
 
 interface User {
   email: string
@@ -13,6 +15,9 @@ interface User {
 const JudgeDashboard = () => {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showCommunication, setShowCommunication] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if user is logged in
@@ -21,6 +26,7 @@ const JudgeDashboard = () => {
       const parsedUser = JSON.parse(userData)
       if (parsedUser.role === 'judge') {
         setUser(parsedUser)
+        loadOngoingEvents()
       } else {
         router.push('/login')
       }
@@ -28,6 +34,22 @@ const JudgeDashboard = () => {
       router.push('/login')
     }
   }, [router])
+
+  const loadOngoingEvents = async () => {
+    try {
+      const { eventService } = await import('../../lib/eventService')
+      const allEvents = await eventService.getPublishedEvents()
+      // Filter for ongoing events where judges can participate
+      const ongoingEvents = allEvents.filter(event => 
+        event.status === 'ongoing' || event.status === 'published'
+      )
+      setEvents(ongoingEvents)
+    } catch (error) {
+      console.error('Error loading events:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleLogout = async () => {
     try {
@@ -186,6 +208,69 @@ const JudgeDashboard = () => {
           </div>
         </div>
 
+        {/* Events Available for Judging */}
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-semibold text-slate-100 mb-4">Events Available for Judging</h2>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-slate-400">Loading events...</p>
+            </div>
+          ) : events.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-slate-400">
+                <div className="w-12 h-12 bg-slate-600 rounded-lg mx-auto mb-4"></div>
+                <p>No events available for judging at the moment</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {events.map((event) => (
+                <div key={event.id} className="border border-slate-700 rounded-lg bg-slate-700/50 p-6">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="font-semibold text-xl text-slate-100">{event.title}</h3>
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                      event.status === 'ongoing' ? 'bg-green-900/30 text-green-400 border border-green-600' :
+                      'bg-blue-900/30 text-blue-400 border border-blue-600'
+                    }`}>
+                      {event.status}
+                    </span>
+                  </div>
+                  
+                  <p className="text-sm text-slate-300 mb-4 line-clamp-2">{event.description}</p>
+                  
+                  <div className="space-y-2 mb-4 text-sm text-slate-400">
+                    <div className="flex justify-between">
+                      <span>Theme:</span>
+                      <span className="text-slate-300">{event.theme}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Organizer:</span>
+                      <span className="text-blue-400">{event.organizerName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Event Date:</span>
+                      <span className="text-slate-300">{new Date(event.timeline.eventStart).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-4 border-t border-slate-600">
+                    <button 
+                      onClick={() => setShowCommunication(event.id!)}
+                      className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+                    >
+                      💬 Join Discussion
+                    </button>
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                      View Submissions
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Pending Reviews */}
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 mb-6">
           <h2 className="text-xl font-semibold text-slate-100 mb-4">Pending Reviews</h2>
@@ -263,6 +348,17 @@ const JudgeDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Communication Modal */}
+      {showCommunication && user && (
+        <EventCommunication
+          eventId={showCommunication}
+          userId={user.email}
+          userName={user.name}
+          userRole="judge"
+          onClose={() => setShowCommunication(null)}
+        />
+      )}
     </div>
   )
 }
