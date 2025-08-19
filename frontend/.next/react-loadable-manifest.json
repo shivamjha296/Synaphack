@@ -1,8 +1,20 @@
 {
-  "lib\\store.ts -> ./api": {
-    "id": "lib\\store.ts -> ./api",
+  "components\\CreateEventForm.tsx -> @/lib/eventService": {
+    "id": "components\\CreateEventForm.tsx -> @/lib/eventService",
     "files": [
-      "static/chunks/_app-pages-browser_src_lib_api_ts.js"
+      "static/chunks/_app-pages-browser_src_lib_eventService_ts.js"
+    ]
+  },
+  "components\\dashboards\\OrganizerDashboard.tsx -> ../../lib/eventService": {
+    "id": "components\\dashboards\\OrganizerDashboard.tsx -> ../../lib/eventService",
+    "files": [
+      "static/chunks/_app-pages-browser_src_lib_eventService_ts.js"
+    ]
+  },
+  "components\\dashboards\\ParticipantDashboard.tsx -> ../../lib/eventService": {
+    "id": "components\\dashboards\\ParticipantDashboard.tsx -> ../../lib/eventService",
+    "files": [
+      "static/chunks/_app-pages-browser_src_lib_eventService_ts.js"
     ]
   }
 }

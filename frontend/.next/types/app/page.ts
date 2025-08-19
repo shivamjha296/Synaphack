@@ -1,4 +1,4 @@
-// File: D:\ai-doc-assistant\hackathon-platform\frontend\src\app\page.tsx
+// File: D:\Desktop\Synaphack\firebase_synaphack\frontend\src\app\page.tsx
 import * as entry from '../../../src/app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
