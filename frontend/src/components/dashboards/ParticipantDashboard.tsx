@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Event } from '../../lib/eventService'
 import RegistrationModal from '../RegistrationModal'
+import EventCommunication from '../EventCommunication'
 
 interface User {
   email: string
@@ -23,6 +24,7 @@ const ParticipantDashboard = () => {
   const [registeredEventsDetails, setRegisteredEventsDetails] = useState<(Event & { registrationData: any })[]>([])
   const [registeredEventsLoading, setRegisteredEventsLoading] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [showCommunication, setShowCommunication] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if user is logged in and ensure Firebase auth state
@@ -393,12 +395,22 @@ const ParticipantDashboard = () => {
                   </div>
                   <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-700">
                     <div className="flex justify-between items-center">
-                      <button 
-                        onClick={() => setSelectedEvent(event)}
-                        className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
-                      >
-                        View Details
-                      </button>
+                      <div className="flex space-x-3">
+                        <button 
+                          onClick={() => setSelectedEvent(event)}
+                          className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                        >
+                          View Details
+                        </button>
+                        {isRegistered(event.id!) && (
+                          <button 
+                            onClick={() => setShowCommunication(event.id!)}
+                            className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+                          >
+                            💬 Chat
+                          </button>
+                        )}
+                      </div>
                       <button 
                         onClick={() => handleRegisterClick(event)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -485,12 +497,20 @@ const ParticipantDashboard = () => {
                   </div>
                   <div className="px-6 py-4 bg-green-900/20 border-t border-green-600/30">
                     <div className="flex justify-between items-center">
-                      <button 
-                        onClick={() => setSelectedEvent(eventWithReg)}
-                        className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors"
-                      >
-                        View Details
-                      </button>
+                      <div className="flex space-x-3">
+                        <button 
+                          onClick={() => setSelectedEvent(eventWithReg)}
+                          className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors"
+                        >
+                          View Details
+                        </button>
+                        <button 
+                          onClick={() => setShowCommunication(eventWithReg.id!)}
+                          className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+                        >
+                          💬 Join Chat
+                        </button>
+                      </div>
                       <div className="flex items-center space-x-2">
                         <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                         <span className="text-xs text-green-400 font-medium">Active Registration</span>
@@ -668,6 +688,17 @@ const ParticipantDashboard = () => {
           userName={user.name}
           onClose={() => setRegistrationEvent(null)}
           onRegistrationComplete={handleRegistrationComplete}
+        />
+      )}
+
+      {/* Communication Modal */}
+      {showCommunication && user && (
+        <EventCommunication
+          eventId={showCommunication}
+          userId={user.email}
+          userName={user.name}
+          userRole="participant"
+          onClose={() => setShowCommunication(null)}
         />
       )}
     </div>

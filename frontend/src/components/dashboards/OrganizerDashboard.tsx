@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import CreateEventForm from '../CreateEventForm'
+import EventCommunication from '../EventCommunication'
 import { Event } from '../../lib/eventService'
 
 interface User {
@@ -25,6 +26,7 @@ const OrganizerDashboard = () => {
   const [eventParticipants, setEventParticipants] = useState<{ [eventId: string]: any[] }>({})
   const [showParticipants, setShowParticipants] = useState<string | null>(null)
   const [participantsLoading, setParticipantsLoading] = useState<string | null>(null)
+  const [showCommunication, setShowCommunication] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if user is logged in and ensure Firebase auth state
@@ -121,6 +123,18 @@ const OrganizerDashboard = () => {
     }
     setShowParticipants(eventId)
     setParticipantsLoading(null)
+  }
+
+  const handleInitializeCommunication = async (eventId: string) => {
+    try {
+      const { communicationService } = await import('../../lib/communicationService')
+      await communicationService.initializeEventCommunication(eventId, user?.uid || user?.email || '')
+      setShowCommunication(eventId)
+    } catch (error) {
+      console.error('Error initializing communication:', error)
+      // Show communication even if initialization fails (channels might already exist)
+      setShowCommunication(eventId)
+    }
   }
 
   const exportParticipantsToCSV = (eventId: string) => {
@@ -467,6 +481,12 @@ const OrganizerDashboard = () => {
                           disabled={participantsLoading === event.id}
                         >
                           {participantsLoading === event.id ? 'Loading...' : `Participants (${eventParticipants[event.id!]?.length || 0})`}
+                        </button>
+                        <button 
+                          onClick={() => handleInitializeCommunication(event.id!)}
+                          className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
+                        >
+                          💬 Communication
                         </button>
                       </div>
                       <div className="flex space-x-2">
@@ -1060,6 +1080,17 @@ const OrganizerDashboard = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Communication Modal */}
+        {showCommunication && user && (
+          <EventCommunication
+            eventId={showCommunication}
+            userId={user.uid || user.email}
+            userName={user.name}
+            userRole="organizer"
+            onClose={() => setShowCommunication(null)}
+          />
         )}
       </div>
     </div>

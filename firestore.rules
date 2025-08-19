@@ -22,6 +22,66 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
+    // Messages collection for communication
+    match /messages/{messageId} {
+      // Allow read access to authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create if user is authenticated
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.senderId;
+      
+      // Allow update if user is the sender or organizer
+      allow update: if request.auth != null 
+        && (request.auth.uid == resource.data.senderId);
+      
+      // Allow delete if user is the sender or has moderation rights
+      allow delete: if request.auth != null 
+        && (request.auth.uid == resource.data.senderId);
+    }
+    
+    // Channels collection
+    match /channels/{channelId} {
+      // Allow read access to authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create/update by organizers
+      allow create, update: if request.auth != null;
+      
+      // Allow delete by organizers
+      allow delete: if request.auth != null;
+    }
+    
+    // Event communication settings
+    match /eventCommunication/{eventCommId} {
+      // Allow read access to authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create/update by organizers
+      allow create, update: if request.auth != null;
+    }
+    
+    // Registrations collection
+    match /registrations/{registrationId} {
+      // Allow read access to authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create if user is authenticated
+      allow create: if request.auth != null;
+      
+      // Allow update/delete by the participant or organizer
+      allow update, delete: if request.auth != null;
+    }
+    
+    // Profiles collection
+    match /profiles/{profileId} {
+      // Allow read access to authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow create/update if user is authenticated
+      allow create, update: if request.auth != null;
+    }
+    
     // For development - uncomment the line below to allow all reads/writes
     // match /{document=**} {
     //   allow read, write: if true;
