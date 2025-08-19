@@ -70,8 +70,28 @@ const EventCommunication = ({
   const loadChannels = async () => {
     try {
       const eventChannels = await communicationService.getEventChannels(eventId)
-      setChannels(eventChannels)
-      if (eventChannels.length > 0 && !activeChannel) {
+
+      // Deduplicate channels by `type` while preserving the first occurrence
+      // and summing messageCount so duplicates (same type) don't appear in the UI.
+      const map = new Map<string, ChatChannel>()
+      for (const ch of eventChannels) {
+        const key = ch.type
+        const existing = map.get(key)
+        if (existing) {
+          // Merge message counts (handle undefined)
+          existing.messageCount = (existing.messageCount || 0) + (ch.messageCount || 0)
+          // Prefer existing.name/description (first occurrence). If missing, fill from current.
+          if (!existing.name && ch.name) existing.name = ch.name
+          if (!existing.description && ch.description) existing.description = ch.description
+        } else {
+          // clone to avoid mutating original
+          map.set(key, { ...ch })
+        }
+      }
+
+      const distinct = Array.from(map.values())
+      setChannels(distinct)
+      if (distinct.length > 0 && !activeChannel) {
         setActiveChannel('announcements')
       }
     } catch (error) {
