@@ -306,7 +306,7 @@ const ParticipantDashboard = () => {
   const handleInitializeCommunication = async (eventId: string) => {
     try {
       const { communicationService } = await import('../../lib/communicationService')
-      await communicationService.initializeEventCommunication(eventId, user?.uid || user?.email || '')
+      await communicationService.initializeEventCommunication(eventId, user?.email || '')
       setShowCommunication(eventId)
     } catch (error) {
       console.error('Error initializing communication:', error)
@@ -901,7 +901,7 @@ const ParticipantDashboard = () => {
                                         <div className="text-sm">
                                           <span className="text-green-300">Submitted: </span>
                                           <span className="text-white">
-                                            {new Date(submission.submissionDate).toLocaleDateString()} at {new Date(submission.submissionDate).toLocaleTimeString()}
+                                            {new Date(submission.submittedAt).toLocaleDateString()} at {new Date(submission.submittedAt).toLocaleTimeString()}
                                           </span>
                                         </div>
                                         
@@ -923,51 +923,51 @@ const ParticipantDashboard = () => {
                                         <div className="pt-3 border-t border-slate-600/30">
                                           <h6 className="text-sm font-medium text-green-300 mb-2">Submission Details:</h6>
                                           <div className="space-y-2">
-                                            {submission.description && (
+                                            {submission.submissionData?.description && (
                                               <div className="text-sm">
                                                 <span className="text-green-300">Description: </span>
-                                                <p className="text-white mt-1">{submission.description}</p>
+                                                <p className="text-white mt-1">{submission.submissionData.description}</p>
                                               </div>
                                             )}
                                             
-                                            {submission.githubUrl && (
+                                            {submission.submissionData?.githubLink && (
                                               <div className="text-sm">
                                                 <span className="text-green-300">GitHub: </span>
                                                 <a 
-                                                  href={submission.githubUrl} 
+                                                  href={submission.submissionData.githubLink} 
                                                   target="_blank" 
                                                   rel="noopener noreferrer"
                                                   className="text-blue-400 hover:text-blue-300 underline"
                                                 >
-                                                  {submission.githubUrl}
+                                                  {submission.submissionData.githubLink}
                                                 </a>
                                               </div>
                                             )}
                                             
-                                            {submission.liveUrl && (
+                                            {submission.submissionData?.pptLink && (
                                               <div className="text-sm">
-                                                <span className="text-green-300">Live URL: </span>
+                                                <span className="text-green-300">Presentation: </span>
                                                 <a 
-                                                  href={submission.liveUrl} 
+                                                  href={submission.submissionData.pptLink} 
                                                   target="_blank" 
                                                   rel="noopener noreferrer"
                                                   className="text-blue-400 hover:text-blue-300 underline"
                                                 >
-                                                  {submission.liveUrl}
+                                                  {submission.submissionData.pptLink}
                                                 </a>
                                               </div>
                                             )}
                                             
-                                            {submission.videoUrl && (
+                                            {submission.submissionData?.videoLink && (
                                               <div className="text-sm">
                                                 <span className="text-green-300">Video: </span>
                                                 <a 
-                                                  href={submission.videoUrl} 
+                                                  href={submission.submissionData.videoLink} 
                                                   target="_blank" 
                                                   rel="noopener noreferrer"
                                                   className="text-blue-400 hover:text-blue-300 underline"
                                                 >
-                                                  {submission.videoUrl}
+                                                  {submission.submissionData.videoLink}
                                                 </a>
                                               </div>
                                             )}
