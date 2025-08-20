@@ -489,9 +489,13 @@ export const eventService = {
         throw new Error('Already registered for this event')
       }
 
+      // Clean the data before storing in Firestore
+      // Remove undefined values to prevent Firestore errors
+      const cleanedData = cleanObjectForFirestore(registrationData)
+      
       // Create registration
       const firestoreData = {
-        ...registrationData,
+        ...cleanedData,
         registrationDate: Timestamp.now(),
       }
       
@@ -708,3 +712,4 @@ export const eventService = {
     }
   }
 }
+
