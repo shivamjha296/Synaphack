@@ -60,10 +60,10 @@ export default function Home() {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/login" className="px-6 py-2 border border-gray-400/50 text-gray-400 rounded-full hover:bg-gray-400/10 transition-all backdrop-blur-sm">
+              <Link href="/login" className="px-6 py-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-full hover:from-gray-700 hover:to-gray-800 transition-all shadow-lg hover:shadow-gray-500/25">
                 Login
               </Link>
-              <Link href="/register" className="px-6 py-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-full hover:from-gray-700 hover:to-gray-800 transition-all shadow-lg hover:shadow-gray-500/25">
+              <Link href="/login" className="px-6 py-2 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-full hover:from-gray-700 hover:to-gray-800 transition-all shadow-lg hover:shadow-gray-500/25">
                 Get Started
               </Link>
             </div>
@@ -96,11 +96,11 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-            <Link href="/register" className="group relative bg-gradient-to-r from-gray-600 via-gray-700 to-gray-800 text-white text-lg px-8 py-4 rounded-full hover:from-gray-700 hover:via-gray-800 hover:to-gray-900 transition-all duration-300 shadow-xl hover:shadow-gray-500/25 transform hover:scale-105">
+            <Link href="/login" className="group relative bg-gradient-to-r from-gray-600 via-gray-700 to-gray-800 text-white text-lg px-8 py-4 rounded-full hover:from-gray-700 hover:via-gray-800 hover:to-gray-900 transition-all duration-300 shadow-xl hover:shadow-gray-500/25 transform hover:scale-105">
               <span className="relative z-10">🚀 Start Your Hackathon</span>
               <div className="absolute inset-0 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full blur opacity-0 group-hover:opacity-20 transition-opacity"></div>
             </Link>
-            <Link href="/events" className="group border-2 border-gray-400/50 text-gray-400 text-lg px-8 py-4 rounded-full hover:bg-gray-400/10 transition-all duration-300 backdrop-blur-sm transform hover:scale-105">
+            <Link href="/login" className="group border-2 border-gray-400/50 text-gray-400 text-lg px-8 py-4 rounded-full hover:bg-gray-400/10 transition-all duration-300 backdrop-blur-sm transform hover:scale-105">
               🎯 Explore Events
             </Link>
           </div>
@@ -204,7 +204,7 @@ export default function Home() {
               <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto font-poppins">
                 Join thousands of developers, designers, and entrepreneurs building the next big thing
               </p>
-              <Link href="/register" className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white text-xl px-10 py-5 rounded-full hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105">
+              <Link href="/login" className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white text-xl px-10 py-5 rounded-full hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105">
                 <span>🚀</span>
                 Launch Your Journey
                 <span className="text-lg">→</span>
