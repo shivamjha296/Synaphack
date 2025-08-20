@@ -146,6 +146,14 @@ const ParticipantDashboard = () => {
         
         if (eventDoc.exists()) {
           const eventData = eventDoc.data()
+          // Convert rounds date fields for this event
+          let rounds = eventData.rounds || [];
+          rounds = rounds.map((round: any) => ({
+            ...round,
+            startDate: round.startDate && typeof round.startDate.toDate === 'function' ? round.startDate.toDate() : (round.startDate ? new Date(round.startDate) : undefined),
+            endDate: round.endDate && typeof round.endDate.toDate === 'function' ? round.endDate.toDate() : (round.endDate ? new Date(round.endDate) : undefined),
+            submissionDeadline: round.submissionDeadline && typeof round.submissionDeadline.toDate === 'function' ? round.submissionDeadline.toDate() : (round.submissionDeadline ? new Date(round.submissionDeadline) : undefined)
+          }));
           const event = { 
             id: eventDoc.id, 
             ...eventData,
@@ -158,7 +166,8 @@ const ParticipantDashboard = () => {
               eventStart: eventData.timeline?.eventStart?.toDate(),
               eventEnd: eventData.timeline?.eventEnd?.toDate(),
               submissionDeadline: eventData.timeline?.submissionDeadline?.toDate(),
-            }
+            },
+            rounds
           } as any
           
           console.log('Found event:', eventData.title)
@@ -241,20 +250,6 @@ const ParticipantDashboard = () => {
   }
 
   const openSubmissionForm = (event: Event, round: any) => {
-    // Check if user is part of a team for this event
-    const eventRegistration = registeredEventsDetails.find(e => e.id === event.id)
-    
-    if (eventRegistration?.registrationData?.teamName && user) {
-      // User is in a team - check if they are the team leader
-      const isTeamLeader = eventRegistration.registrationData.teamCreator === user.email
-      
-      if (!isTeamLeader) {
-        // Show message that only team leader can submit
-        alert('Only the team leader can submit for the team. Please ask your team leader to make the submission.')
-        return
-      }
-    }
-    
     setSubmissionForm({ event, round })
   }
 
@@ -595,7 +590,6 @@ const ParticipantDashboard = () => {
         {/* Registered Events */}
         <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 mb-6 shadow-xl">
           <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg">My Registered Events</h2>
-          
           {registeredEventsLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
@@ -610,16 +604,78 @@ const ParticipantDashboard = () => {
               <p className="text-blue-200">Register for events above to see them here</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-10">
               {registeredEventsDetails.map((eventWithReg) => (
-                <SubmissionStatusCard
-                  key={eventWithReg.id}
-                  event={eventWithReg}
-                  submissions={userSubmissions[eventWithReg.id!] || []}
-                  onOpenSubmissionForm={openSubmissionForm}
-                  loading={submissionsLoading === eventWithReg.id}
-                  userEmail={user?.email}
-                />
+                <div key={eventWithReg.id} className="bg-slate-800/60 rounded-xl p-6 shadow-lg border border-cyan-700/30">
+                  <SubmissionStatusCard
+                    event={eventWithReg}
+                    submissions={userSubmissions[eventWithReg.id!] || []}
+                    onOpenSubmissionForm={openSubmissionForm}
+                    loading={submissionsLoading === eventWithReg.id}
+                  />
+                  {/* Hackathon Rounds Timeline */}
+                  {eventWithReg.rounds && eventWithReg.rounds.length > 0 && (
+                    <div className="mt-8">
+                      <h3 className="text-lg font-semibold text-white mb-3">Hackathon Rounds Timeline</h3>
+                      <div className="space-y-8 border-l-2 border-cyan-700 pl-6 relative">
+                        {eventWithReg.rounds.map((round, index) => (
+                          <div key={round.id || index} className="relative pb-2">
+                            <div className="absolute -left-7 top-2 w-4 h-4 bg-cyan-400 rounded-full border-4 border-cyan-800 shadow"></div>
+                            <div className="bg-slate-700/60 rounded-lg p-4 shadow-md">
+                              <div className="flex justify-between items-center mb-2">
+                                <h4 className="font-medium text-white text-base">Round {index + 1}: {round.name}</h4>
+                                {round.maxParticipants && (
+                                  <span className="text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded">
+                                    Max: {round.maxParticipants}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-blue-200 text-sm mb-3">{round.description}</p>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs mb-2">
+                                <div>
+                                  <span className="text-cyan-300 font-semibold">Start:</span>
+                                  <span className="text-blue-200 ml-1">{(() => {
+                                    if (!round.startDate) return 'Not set';
+                                    const d = new Date(round.startDate);
+                                    return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
+                                  })()}</span>
+                                </div>
+                                <div>
+                                  <span className="text-cyan-300 font-semibold">End:</span>
+                                  <span className="text-blue-200 ml-1">{(() => {
+                                    if (!round.endDate) return 'Not set';
+                                    const d = new Date(round.endDate);
+                                    return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
+                                  })()}</span>
+                                </div>
+                                <div>
+                                  <span className="text-cyan-300 font-semibold">Submission:</span>
+                                  <span className="text-blue-200 ml-1">{(() => {
+                                    if (!round.submissionDeadline) return 'Not set';
+                                    const d = new Date(round.submissionDeadline);
+                                    return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
+                                  })()}</span>
+                                </div>
+                              </div>
+                              {round.requirements && (
+                                <div className="mt-1">
+                                  <span className="text-cyan-300 text-xs font-semibold">Requirements:</span>
+                                  <span className="text-blue-200 text-xs ml-1">{round.requirements}</span>
+                                </div>
+                              )}
+                              {round.eliminationCriteria && (
+                                <div className="mt-1">
+                                  <span className="text-cyan-300 text-xs font-semibold">Elimination:</span>
+                                  <span className="text-blue-200 text-xs ml-1">{round.eliminationCriteria}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -640,19 +696,9 @@ const ParticipantDashboard = () => {
                   <div key={invite.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-gradient-to-r from-blue-950/50 to-cyan-950/50 rounded-lg border border-cyan-500/30">
                     <div className="mb-2 sm:mb-0">
                       <div className="text-white font-medium">{invite.teamName}</div>
-                      <div className="text-sm text-blue-200">Team Code: <span className="font-mono text-cyan-300">{invite.inviteCode}</span></div>
                       <div className="text-sm text-blue-200">Expires: {invite.expiresAt.toLocaleDateString()}</div>
                     </div>
                     <div className="flex space-x-2">
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(invite.inviteCode)
-                          alert('Team code copied to clipboard!')
-                        }}
-                        className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm rounded hover:from-green-400 hover:to-emerald-400 transition-all"
-                      >
-                        Copy Code
-                      </button>
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(teamInviteService.getInviteUrl(invite.inviteCode))
@@ -678,81 +724,25 @@ const ParticipantDashboard = () => {
             
             <div className="pt-4">
               <h3 className="text-lg font-semibold text-white00 mb-3">Your Teams</h3>
-              
-              {/* Team Leadership Info */}
-              <div className="mb-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
-                <div className="flex items-start space-x-3">
-                  <div className="text-blue-400 text-lg">ℹ️</div>
-                  <div>
-                    <h4 className="text-blue-300 font-medium mb-1">Team Submission Rules</h4>
-                    <ul className="text-sm text-blue-200 space-y-1">
-                      <li>• Only the <strong>team leader</strong> can submit for the team</li>
-                      <li>• Team members can view submissions but cannot edit or submit</li>
-                      <li>• Team leaders can invite new members anytime</li>
-                      <li>• All team members will receive certificates if the team wins</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              
               <div className="space-y-3">
                 {registeredEventsDetails
                   .filter(event => event.registrationData?.teamName)
-                  .map((event) => {
-                    const isLeader = event.registrationData?.teamCreator === user?.email
-                    return (
-                      <div key={event.id} className="flex flex-col py-3 px-4 bg-slate-700/50 rounded-lg border border-slate-600">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                              <div className="text-white00 font-medium">{event.registrationData.teamName}</div>
-                              {isLeader && (
-                                <span className="px-2 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs rounded-full font-medium">
-                                  👑 Leader
-                                </span>
-                              )}
-                              {!isLeader && (
-                                <span className="px-2 py-1 bg-slate-600 text-slate-300 text-xs rounded-full">
-                                  Member
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-sm text-cyan-30000">{event.title}</div>
-                            {!isLeader && (
-                              <div className="text-xs text-slate-400 mt-1">
-                                ℹ️ Only team leader can submit submissions for this team
-                              </div>
-                            )}
-                          </div>
-                          <div className="mt-2 sm:mt-0 flex space-x-2">
-                            {isLeader && (
-                              <button
-                                onClick={() => handleCreateTeamInvite(event.id!, event.registrationData.teamName!)}
-                                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                              >
-                                Invite Members
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                        {event.registrationData?.teamMembers && event.registrationData.teamMembers.length > 0 && (
-                          <div className="mt-3 pt-3 border-t border-slate-600">
-                            <div className="text-sm text-slate-300 mb-2">Team Members ({event.registrationData.teamMembers.length + 1}):</div>
-                            <div className="flex flex-wrap gap-2">
-                              <div className="px-2 py-1 bg-amber-900/30 text-amber-200 text-xs rounded border border-amber-500/30">
-                                {event.registrationData.teamCreator} (Leader)
-                              </div>
-                              {event.registrationData.teamMembers.map((member: any, index: number) => (
-                                <div key={index} className="px-2 py-1 bg-slate-600/50 text-slate-300 text-xs rounded">
-                                  {member.email}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                  .map((event) => (
+                    <div key={event.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                      <div>
+                        <div className="text-white00 font-medium">{event.registrationData.teamName}</div>
+                        <div className="text-sm text-cyan-30000">{event.title}</div>
                       </div>
-                    )
-                  })}
+                      <div className="mt-2 sm:mt-0">
+                        <button
+                          onClick={() => handleCreateTeamInvite(event.id!, event.registrationData.teamName!)}
+                          className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                        >
+                          Invite Members
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                   
                 {registeredEventsDetails.filter(event => event.registrationData?.teamName).length === 0 && (
                   <p className="text-cyan-30000">You haven't created any teams yet.</p>
@@ -870,29 +860,39 @@ const ParticipantDashboard = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
                           <div>
                             <span className="text-cyan-30000">Start:</span>
-                            <span className="text-blue-20000 ml-1">{new Date(round.startDate).toLocaleDateString()}</span>
+                            <span className="text-cyan-30000 ml-1">{(() => {
+                              if (!round.startDate) return 'Not set';
+                              const d = new Date(round.startDate);
+                              return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
+                            })()}</span>
                           </div>
                           <div>
-                            <span className="text-cyan-300">End:</span>
-                            <span className="text-blue-200 ml-1">{new Date(round.endDate).toLocaleDateString()}</span>
+                            <span className="text-cyan-30000">End:</span>
+                            <span className="text-cyan-30000 ml-1">{(() => {
+                              if (!round.endDate) return 'Not set';
+                              const d = new Date(round.endDate);
+                              return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
+                            })()}</span>
                           </div>
                           <div>
-                            <span className="text-cyan-300">Submission:</span>
-                            <span className="text-blue-200 ml-1">{new Date(round.submissionDeadline).toLocaleDateString()}</span>
+                            <span className="text-cyan-30000">Submission:</span>
+                            <span className="text-cyan-30000 ml-1">{(() => {
+                              if (!round.submissionDeadline) return 'Not set';
+                              const d = new Date(round.submissionDeadline);
+                              return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
+                            })()}</span>
                           </div>
                         </div>
                         {round.requirements && (
                           <div className="mt-2">
-                            <span className="text-cyan-300 text-xs">Requirements:</span>
-                            <span className="text-blue-200 text-xs ml-1">{round.requirements}</span>
+                            <span className="text-cyan-30000 text-xs">Requirements:</span>
+                            <span className="text-cyan-30000 text-xs ml-1">{round.requirements}</span>
                           </div>
                         )}
                         {round.eliminationCriteria && (
                           <div className="mt-2">
-                            <span className="text-cyan-300 text-xs">Elimination:</span>
-                            <span className="text-blue-200 text-xs ml-1">{round.eliminationCriteria}</span>
                             <span className="text-cyan-30000 text-xs">Elimination Criteria:</span>
-                            <span className="text-blue-20000 text-xs ml-1">{round.eliminationCriteria}</span>
+                            <span className="text-cyan-30000 text-xs ml-1">{round.eliminationCriteria}</span>
                           </div>
                         )}
                       </div>

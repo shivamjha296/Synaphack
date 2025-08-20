@@ -46,16 +46,31 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
   // Initialize form data for editing
   useEffect(() => {
     if (editingEvent) {
-      // Helper function to safely convert date
+      // Helper function to safely convert date to ISO string for datetime-local
       const safeToDateString = (dateValue: any) => {
         if (!dateValue) return ''
-        
         try {
-          // If it's a Firestore Timestamp, convert to date
+          // Firestore Timestamp
           if (dateValue && typeof dateValue.toDate === 'function') {
             return dateValue.toDate().toISOString().slice(0, 16)
           }
-          // If it's already a Date object or date string
+          // Already ISO string (from datetime-local)
+          if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(dateValue)) {
+            return dateValue.slice(0, 16)
+          }
+          // dd-MM-yyyy HH:mm (old format)
+          if (typeof dateValue === 'string' && /\d{2}-\d{2}-\d{4} \d{2}:\d{2}/.test(dateValue)) {
+            const [d, m, y, h, min] = dateValue.match(/\d+/g) || [];
+            if (d && m && y && h && min) {
+              const iso = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T${h.padStart(2, '0')}:${min.padStart(2, '0')}`;
+              return iso;
+            }
+          }
+          // Date object
+          if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
+            return dateValue.toISOString().slice(0, 16)
+          }
+          // Try parsing as date string
           const date = new Date(dateValue)
           if (!isNaN(date.getTime())) {
             return date.toISOString().slice(0, 16)
@@ -139,7 +154,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
       if (!organizerId) {
         throw new Error('Organizer ID is missing')
       }
-      
+
       // Validate timeline dates
       const validateTimelineDate = (dateStr: string, fieldName: string) => {
         if (!dateStr) {
@@ -151,7 +166,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
         }
         return date
       }
-      
+
       const timelineDates = {
         registrationStart: validateTimelineDate(formData.timeline.registrationStart, 'Registration Start'),
         registrationEnd: validateTimelineDate(formData.timeline.registrationEnd, 'Registration End'),
@@ -159,23 +174,40 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
         eventEnd: validateTimelineDate(formData.timeline.eventEnd, 'Event End'),
         submissionDeadline: validateTimelineDate(formData.timeline.submissionDeadline, 'Submission Deadline')
       }
-      
+
+      // Validate rounds: all round date fields must be set
+      for (let i = 0; i < formData.rounds.length; i++) {
+        const round = formData.rounds[i];
+        if (!round.startDate || !round.endDate || !round.submissionDeadline) {
+          throw new Error(`All date fields (Start, End, Submission Deadline) are required for Round ${i + 1}`)
+        }
+        if (isNaN(new Date(round.startDate).getTime())) {
+          throw new Error(`Invalid Start Date for Round ${i + 1}`)
+        }
+        if (isNaN(new Date(round.endDate).getTime())) {
+          throw new Error(`Invalid End Date for Round ${i + 1}`)
+        }
+        if (isNaN(new Date(round.submissionDeadline).getTime())) {
+          throw new Error(`Invalid Submission Deadline for Round ${i + 1}`)
+        }
+      }
+
       // Dynamic import to avoid SSR issues
       const { eventService } = await import('@/lib/eventService')
-      
-      // Process rounds with date conversion
+
+      // Save round dates as ISO strings (from datetime-local input)
       const processedRounds = formData.rounds.map((round: any) => ({
         id: round.id,
         name: round.name,
         description: round.description,
-        startDate: round.startDate ? new Date(round.startDate) : new Date(),
-        endDate: round.endDate ? new Date(round.endDate) : new Date(),
-        submissionDeadline: round.submissionDeadline ? new Date(round.submissionDeadline) : new Date(),
+        startDate: round.startDate || '',
+        endDate: round.endDate || '',
+        submissionDeadline: round.submissionDeadline || '',
         requirements: round.requirements,
         maxParticipants: round.maxParticipants ? parseInt(round.maxParticipants) : undefined,
         eliminationCriteria: round.eliminationCriteria
       }))
-      
+
       const eventData = {
         ...formData,
         timeline: timelineDates,
@@ -198,7 +230,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
         // Create new event
         await eventService.createEvent(eventData)
       }
-      
+
       onEventCreated()
       onClose()
     } catch (err: any) {
@@ -516,6 +548,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                             updatedRounds[index] = { ...round, startDate: e.target.value }
                             setFormData(prev => ({ ...prev, rounds: updatedRounds }))
                           }}
+                          required
                           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
@@ -531,6 +564,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                             updatedRounds[index] = { ...round, endDate: e.target.value }
                             setFormData(prev => ({ ...prev, rounds: updatedRounds }))
                           }}
+                          required
                           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
@@ -546,6 +580,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                             updatedRounds[index] = { ...round, submissionDeadline: e.target.value }
                             setFormData(prev => ({ ...prev, rounds: updatedRounds }))
                           }}
+                          required
                           className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </div>
