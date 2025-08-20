@@ -103,6 +103,12 @@ const SubmissionForm = ({
     setError('')
 
     try {
+      // Check if user can submit for team
+      const permission = await submissionService.canUserSubmitForTeam(event.id!, participantEmail)
+      if (!permission.canSubmit) {
+        throw new Error(permission.reason || 'You do not have permission to submit for this team')
+      }
+
       // Validate submission
       const validation = submissionService.validateSubmission(formData)
       if (!validation.isValid) {
@@ -112,21 +118,28 @@ const SubmissionForm = ({
       // Check if submission is late
       const isLate = submissionService.isSubmissionLate(new Date(round.submissionDeadline))
       
-      const submissionData = {
-        eventId: event.id!,
-        roundId: round.id,
+      const submissionDataObject = {
+        ...formData,
+        status: isLate ? 'late' : 'submitted'
+      }
+
+      const teamData = teamName ? {
+        teamName,
+        teamMembers
+      } : undefined
+
+      // Use the new GitMCP-integrated submission method
+      await submissionService.submitForRoundWithAnalysis(
+        event.id!,
+        round.id,
+        submissionDataObject,
         participantEmail,
         participantName,
-        teamName,
-        teamMembers,
-        submissionData: formData,
-        status: isLate ? 'late' : 'submitted',
-        isTeamSubmission: !!teamName && !!teamMembers && teamMembers.length > 0
-      } as any
-
-      await submissionService.submitForRound(submissionData)
+        !!teamName, // isTeamSubmission
+        teamData
+      )
       
-      console.log('Submission completed successfully')
+      console.log('Submission with GitMCP analysis completed successfully')
       onSubmissionComplete()
       onClose()
     } catch (err: any) {
@@ -221,6 +234,12 @@ const SubmissionForm = ({
               <p className="text-xs text-slate-400 mt-1">
                 Your project's source code repository
               </p>
+              {formData.githubLink && (
+                <div className="mt-2 p-2 bg-purple-900/20 border border-purple-500/30 rounded text-xs text-purple-200">
+                  <span className="mr-1">🔍</span>
+                  <strong>Auto-analysis enabled:</strong> Your repository will be automatically analyzed for tech stack and insights when you submit.
+                </div>
+              )}
             </div>
 
             <div>
@@ -367,12 +386,18 @@ const SubmissionForm = ({
               } disabled:opacity-50`}
             >
               {isLoading 
-                ? (existingSubmission ? 'Updating...' : 'Submitting...') 
+                ? (existingSubmission 
+                    ? 'Updating & Analyzing...' 
+                    : formData.githubLink 
+                      ? 'Submitting & Analyzing Repository...' 
+                      : 'Submitting...') 
                 : existingSubmission 
                   ? 'Update Submission'
                   : isSubmissionLate 
                     ? 'Submit Late' 
-                    : 'Submit'
+                    : formData.githubLink
+                      ? 'Submit & Analyze Repository'
+                      : 'Submit'
               }
             </button>
           </div>

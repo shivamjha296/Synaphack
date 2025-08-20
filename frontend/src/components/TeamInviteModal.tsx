@@ -99,30 +99,54 @@ const TeamInviteModal = ({
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Invite Link</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Team Code</label>
+                <div className="flex">
+                  <input
+                    type="text"
+                    value={inviteCode}
+                    readOnly
+                    className="flex-1 px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-l-md focus:outline-none font-mono text-lg text-center"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(inviteCode)
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 2000)
+                    }}
+                    className="px-3 py-2 bg-green-600 text-white rounded-r-md hover:bg-green-700 focus:outline-none"
+                  >
+                    {copied ? 'Copied!' : 'Copy Code'}
+                  </button>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">Share this code with your team members</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Full Invite Link (Optional)</label>
                 <div className="flex">
                   <input
                     type="text"
                     value={inviteUrl}
                     readOnly
-                    className="flex-1 px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-l-md focus:outline-none"
+                    className="flex-1 px-3 py-2 border border-slate-600 bg-slate-700 text-slate-100 rounded-l-md focus:outline-none text-sm"
                   />
                   <button
                     onClick={handleCopyInvite}
                     className="px-3 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none"
                   >
-                    {copied ? 'Copied!' : 'Copy'}
+                    Copy Link
                   </button>
                 </div>
+                <p className="text-xs text-slate-400 mt-1">Alternative: Share this direct link</p>
               </div>
 
               <div className="text-sm text-slate-400 bg-blue-900/20 border border-blue-800 rounded-lg p-4">
                 <h5 className="text-blue-300 font-medium mb-2">How to use:</h5>
                 <ul className="space-y-1">
-                  <li>• Share this link with your team members</li>
-                  <li>• They can click the link to join your team</li>
-                  <li>• No need for them to create a new team</li>
-                  <li>• Link expires in {expiryDays} day{expiryDays > 1 ? 's' : ''}</li>
+                  <li>• <strong>Preferred:</strong> Share the team code with your members</li>
+                  <li>• They can enter it when registering for the event</li>
+                  <li>• <strong>Alternative:</strong> Share the direct link for one-click joining</li>
+                  <li>• Code expires in {expiryDays} day{expiryDays > 1 ? 's' : ''}</li>
                 </ul>
               </div>
             </div>
