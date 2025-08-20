@@ -103,6 +103,12 @@ const SubmissionForm = ({
     setError('')
 
     try {
+      // Check if user can submit for team
+      const permission = await submissionService.canUserSubmitForTeam(event.id!, participantEmail)
+      if (!permission.canSubmit) {
+        throw new Error(permission.reason || 'You do not have permission to submit for this team')
+      }
+
       // Validate submission
       const validation = submissionService.validateSubmission(formData)
       if (!validation.isValid) {
@@ -121,7 +127,7 @@ const SubmissionForm = ({
         teamMembers,
         submissionData: formData,
         status: isLate ? 'late' : 'submitted',
-        isTeamSubmission: !!teamName && !!teamMembers && teamMembers.length > 0
+        isTeamSubmission: !!teamName // If user has a team name, it's a team submission
       } as any
 
       await submissionService.submitForRound(submissionData)

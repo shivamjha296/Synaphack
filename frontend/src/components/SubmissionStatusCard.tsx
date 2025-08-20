@@ -8,18 +8,30 @@ interface SubmissionStatusCardProps {
   submissions: RoundSubmission[]
   onOpenSubmissionForm: (event: Event, round: any) => void
   loading?: boolean
+  userEmail?: string // Add user email to check team leadership
 }
 
 const SubmissionStatusCard = ({ 
   event, 
   submissions, 
   onOpenSubmissionForm, 
-  loading = false 
+  loading = false,
+  userEmail
 }: SubmissionStatusCardProps) => {
   const [expandedRounds, setExpandedRounds] = useState<Set<string>>(new Set())
   const [certificates, setCertificates] = useState<Certificate[]>([])
   const [certificateLoading, setCertificateLoading] = useState(false)
   const [showCertificates, setShowCertificates] = useState(false)
+
+  // Check if current user is team leader
+  const isTeamLeader = () => {
+    if (!event.registrationData?.teamName || !userEmail) return true // Solo or no team
+    return event.registrationData?.teamCreator === userEmail
+  }
+
+  const isTeamMember = () => {
+    return event.registrationData?.teamName && !isTeamLeader()
+  }
 
   // Load certificates for this event
   useEffect(() => {
@@ -274,6 +286,13 @@ const SubmissionStatusCard = ({
                           }
                         </span>
                         
+                        {/* Team submission indicator */}
+                        {submission?.isTeamSubmission && (
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-blue-900/30 border border-blue-500/30 text-blue-300">
+                            👥 Team
+                          </span>
+                        )}
+                        
                         <button className="text-slate-400 hover:text-slate-200">
                           {isExpanded ? '▲' : '▼'}
                         </button>
@@ -297,6 +316,16 @@ const SubmissionStatusCard = ({
 
                         {submission && (
                           <div className="bg-slate-800/50 rounded p-3 space-y-2">
+                            {/* Team context indicator */}
+                            {isTeamMember() && submission.isTeamSubmission && (
+                              <div className="text-sm bg-blue-900/30 border border-blue-500/30 rounded p-2 mb-2">
+                                <span className="text-blue-300">👥 Team Submission</span>
+                                <span className="text-blue-200 ml-2">
+                                  Submitted by your team leader ({submission.participantEmail})
+                                </span>
+                              </div>
+                            )}
+                            
                             <div className="text-sm">
                               <span className="text-slate-400">Submitted: </span>
                               <span className="text-slate-200">
@@ -317,11 +346,109 @@ const SubmissionStatusCard = ({
                                 <span className="text-purple-300 font-medium">{submission.score}/100</span>
                               </div>
                             )}
+                            
+                            {/* Submission Content */}
+                            <div className="pt-3 border-t border-slate-600/30">
+                              <h6 className="text-sm font-medium text-slate-300 mb-2">Submission Details:</h6>
+                              <div className="space-y-2">
+                                {submission.submissionData.description && (
+                                  <div className="text-sm">
+                                    <span className="text-slate-400">Description: </span>
+                                    <p className="text-slate-200 mt-1">{submission.submissionData.description}</p>
+                                  </div>
+                                )}
+                                
+                                {submission.submissionData.githubLink && (
+                                  <div className="text-sm">
+                                    <span className="text-slate-400">GitHub: </span>
+                                    <a 
+                                      href={submission.submissionData.githubLink} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-400 hover:text-blue-300 underline"
+                                    >
+                                      {submission.submissionData.githubLink}
+                                    </a>
+                                  </div>
+                                )}
+                                
+                                {submission.submissionData.pptLink && (
+                                  <div className="text-sm">
+                                    <span className="text-slate-400">Presentation: </span>
+                                    <a 
+                                      href={submission.submissionData.pptLink} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-400 hover:text-blue-300 underline"
+                                    >
+                                      {submission.submissionData.pptLink}
+                                    </a>
+                                  </div>
+                                )}
+                                
+                                {submission.submissionData.videoLink && (
+                                  <div className="text-sm">
+                                    <span className="text-slate-400">Video: </span>
+                                    <a 
+                                      href={submission.submissionData.videoLink} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-400 hover:text-blue-300 underline"
+                                    >
+                                      {submission.submissionData.videoLink}
+                                    </a>
+                                  </div>
+                                )}
+                                
+                                {submission.submissionData.additionalLinks && submission.submissionData.additionalLinks.length > 0 && (
+                                  <div className="text-sm">
+                                    <span className="text-slate-400">Additional Links: </span>
+                                    <div className="mt-1 space-y-1">
+                                      {submission.submissionData.additionalLinks.map((link, index) => (
+                                        <div key={index}>
+                                          <span className="text-slate-300">{link.name}: </span>
+                                          <a 
+                                            href={link.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-blue-400 hover:text-blue-300 underline"
+                                          >
+                                            {link.url}
+                                          </a>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {submission.submissionData.tags && submission.submissionData.tags.length > 0 && (
+                                  <div className="text-sm">
+                                    <span className="text-slate-400">Tags: </span>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {submission.submissionData.tags.map((tag, index) => (
+                                        <span key={index} className="px-2 py-1 bg-slate-700 text-slate-300 rounded text-xs">
+                                          {tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         )}
 
                         <div className="flex justify-end space-x-2">
-                          {submission ? (
+                          {isTeamMember() ? (
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-slate-400">Only team leader can submit</span>
+                              {!submission && (
+                                <div className="px-4 py-2 bg-slate-600 text-slate-300 rounded cursor-not-allowed text-sm font-medium">
+                                  {isLate ? 'Submit Late' : 'Submit'}
+                                </div>
+                              )}
+                            </div>
+                          ) : submission ? (
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation()

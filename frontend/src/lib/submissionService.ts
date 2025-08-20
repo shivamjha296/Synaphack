@@ -80,6 +80,50 @@ const cleanObjectForFirestore = (obj: any): any => {
 }
 
 export const submissionService = {
+  // Check if user can submit for a team (only team leaders can submit)
+  async canUserSubmitForTeam(eventId: string, userEmail: string): Promise<{canSubmit: boolean, reason?: string}> {
+    try {
+      console.log('Checking submission permission for:', { eventId, userEmail })
+      
+      // Query registrations directly to avoid circular dependency
+      const registrationsQuery = query(
+        collection(db, 'registrations'),
+        where('eventId', '==', eventId),
+        where('participantEmail', '==', userEmail)
+      )
+      
+      const registrationsSnapshot = await getDocs(registrationsQuery)
+      console.log('Found registrations:', registrationsSnapshot.size)
+      
+      if (registrationsSnapshot.empty) {
+        console.log('User not registered for event')
+        return { canSubmit: false, reason: 'User not registered for this event' }
+      }
+      
+      const userRegistration = registrationsSnapshot.docs[0].data()
+      console.log('User registration data:', userRegistration)
+      
+      // If user is not in a team, they can submit
+      if (!userRegistration.teamName) {
+        console.log('User not in team, can submit')
+        return { canSubmit: true }
+      }
+      
+      // If user is in a team, check if they are the team leader
+      const isTeamLeader = userRegistration.teamCreator === userEmail
+      console.log('Team check:', { teamName: userRegistration.teamName, teamCreator: userRegistration.teamCreator, isTeamLeader })
+      
+      if (isTeamLeader) {
+        return { canSubmit: true }
+      }
+      
+      return { canSubmit: false, reason: 'Only team leader can submit for the team' }
+    } catch (error) {
+      console.error('Error checking submission permission:', error)
+      return { canSubmit: false, reason: 'Error checking permissions' }
+    }
+  },
+
   // Submit or update a round submission
   async submitForRound(submissionData: Omit<RoundSubmission, 'id' | 'submittedAt' | 'updatedAt'>): Promise<string> {
     try {
@@ -226,16 +270,51 @@ export const submissionService = {
     }
   },
 
-  // Get all submissions for a participant in an event
+  // Get all submissions for a participant in an event (including team submissions)
   async getParticipantSubmissions(eventId: string, participantEmail: string): Promise<RoundSubmission[]> {
     try {
-      // Simplified query - we'll filter by eventId and participantEmail without orderBy for now
-      const q = query(
-        collection(db, SUBMISSIONS_COLLECTION),
+      console.log('Getting submissions for:', { eventId, participantEmail })
+      
+      // First, get the user's registration to check if they're in a team
+      const registrationsQuery = query(
+        collection(db, 'registrations'),
         where('eventId', '==', eventId),
         where('participantEmail', '==', participantEmail)
       )
-      const querySnapshot = await getDocs(q)
+      
+      const registrationsSnapshot = await getDocs(registrationsQuery)
+      
+      if (registrationsSnapshot.empty) {
+        console.log('No registration found for user')
+        return []
+      }
+      
+      const userRegistration = registrationsSnapshot.docs[0].data()
+      console.log('User registration:', userRegistration)
+      
+      let submissionsQuery
+      
+      if (userRegistration.teamName && userRegistration.teamCreator) {
+        // User is in a team - get submissions made by the team leader
+        console.log('User is in team, getting team leader submissions')
+        submissionsQuery = query(
+          collection(db, SUBMISSIONS_COLLECTION),
+          where('eventId', '==', eventId),
+          where('participantEmail', '==', userRegistration.teamCreator),
+          where('isTeamSubmission', '==', true)
+        )
+      } else {
+        // User is solo - get their own submissions
+        console.log('User is solo, getting personal submissions')
+        submissionsQuery = query(
+          collection(db, SUBMISSIONS_COLLECTION),
+          where('eventId', '==', eventId),
+          where('participantEmail', '==', participantEmail)
+        )
+      }
+      
+      const querySnapshot = await getDocs(submissionsQuery)
+      console.log('Found submissions:', querySnapshot.size)
       
       const submissions = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -245,11 +324,14 @@ export const submissionService = {
       })) as RoundSubmission[]
       
       // Sort in memory instead of using orderBy
-      return submissions.sort((a, b) => {
+      const sortedSubmissions = submissions.sort((a, b) => {
         const dateA = a.submittedAt || new Date(0)
         const dateB = b.submittedAt || new Date(0)
         return dateB.getTime() - dateA.getTime()
       })
+      
+      console.log('Returning submissions:', sortedSubmissions)
+      return sortedSubmissions
     } catch (error) {
       console.error('Error getting participant submissions:', error)
       throw error

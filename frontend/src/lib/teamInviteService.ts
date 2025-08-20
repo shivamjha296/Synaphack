@@ -207,6 +207,8 @@ export const teamInviteService = {
         participantName,
         teamName: teamInvite.teamName,
         teamMembers: creatorRegistration.teamMembers, // Copy team members from creator
+        teamCreator: teamInvite.createdBy, // Set the team creator
+        joinedViaInvite: true, // Mark that this user joined via invite
         registrationDate: new Date(),
         status: 'pending',
         paymentStatus: 'paid' // Assuming team members don't need to pay individually

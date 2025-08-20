@@ -241,6 +241,20 @@ const ParticipantDashboard = () => {
   }
 
   const openSubmissionForm = (event: Event, round: any) => {
+    // Check if user is part of a team for this event
+    const eventRegistration = registeredEventsDetails.find(e => e.id === event.id)
+    
+    if (eventRegistration?.registrationData?.teamName && user) {
+      // User is in a team - check if they are the team leader
+      const isTeamLeader = eventRegistration.registrationData.teamCreator === user.email
+      
+      if (!isTeamLeader) {
+        // Show message that only team leader can submit
+        alert('Only the team leader can submit for the team. Please ask your team leader to make the submission.')
+        return
+      }
+    }
+    
     setSubmissionForm({ event, round })
   }
 
@@ -604,6 +618,7 @@ const ParticipantDashboard = () => {
                   submissions={userSubmissions[eventWithReg.id!] || []}
                   onOpenSubmissionForm={openSubmissionForm}
                   loading={submissionsLoading === eventWithReg.id}
+                  userEmail={user?.email}
                 />
               ))}
             </div>
@@ -625,9 +640,19 @@ const ParticipantDashboard = () => {
                   <div key={invite.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-gradient-to-r from-blue-950/50 to-cyan-950/50 rounded-lg border border-cyan-500/30">
                     <div className="mb-2 sm:mb-0">
                       <div className="text-white font-medium">{invite.teamName}</div>
+                      <div className="text-sm text-blue-200">Team Code: <span className="font-mono text-cyan-300">{invite.inviteCode}</span></div>
                       <div className="text-sm text-blue-200">Expires: {invite.expiresAt.toLocaleDateString()}</div>
                     </div>
                     <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(invite.inviteCode)
+                          alert('Team code copied to clipboard!')
+                        }}
+                        className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm rounded hover:from-green-400 hover:to-emerald-400 transition-all"
+                      >
+                        Copy Code
+                      </button>
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(teamInviteService.getInviteUrl(invite.inviteCode))
@@ -653,25 +678,81 @@ const ParticipantDashboard = () => {
             
             <div className="pt-4">
               <h3 className="text-lg font-semibold text-white00 mb-3">Your Teams</h3>
+              
+              {/* Team Leadership Info */}
+              <div className="mb-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <div className="text-blue-400 text-lg">ℹ️</div>
+                  <div>
+                    <h4 className="text-blue-300 font-medium mb-1">Team Submission Rules</h4>
+                    <ul className="text-sm text-blue-200 space-y-1">
+                      <li>• Only the <strong>team leader</strong> can submit for the team</li>
+                      <li>• Team members can view submissions but cannot edit or submit</li>
+                      <li>• Team leaders can invite new members anytime</li>
+                      <li>• All team members will receive certificates if the team wins</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              
               <div className="space-y-3">
                 {registeredEventsDetails
                   .filter(event => event.registrationData?.teamName)
-                  .map((event) => (
-                    <div key={event.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-slate-700/50 rounded-lg border border-slate-600">
-                      <div>
-                        <div className="text-white00 font-medium">{event.registrationData.teamName}</div>
-                        <div className="text-sm text-cyan-30000">{event.title}</div>
+                  .map((event) => {
+                    const isLeader = event.registrationData?.teamCreator === user?.email
+                    return (
+                      <div key={event.id} className="flex flex-col py-3 px-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <div className="text-white00 font-medium">{event.registrationData.teamName}</div>
+                              {isLeader && (
+                                <span className="px-2 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs rounded-full font-medium">
+                                  👑 Leader
+                                </span>
+                              )}
+                              {!isLeader && (
+                                <span className="px-2 py-1 bg-slate-600 text-slate-300 text-xs rounded-full">
+                                  Member
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-sm text-cyan-30000">{event.title}</div>
+                            {!isLeader && (
+                              <div className="text-xs text-slate-400 mt-1">
+                                ℹ️ Only team leader can submit submissions for this team
+                              </div>
+                            )}
+                          </div>
+                          <div className="mt-2 sm:mt-0 flex space-x-2">
+                            {isLeader && (
+                              <button
+                                onClick={() => handleCreateTeamInvite(event.id!, event.registrationData.teamName!)}
+                                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                              >
+                                Invite Members
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        {event.registrationData?.teamMembers && event.registrationData.teamMembers.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-slate-600">
+                            <div className="text-sm text-slate-300 mb-2">Team Members ({event.registrationData.teamMembers.length + 1}):</div>
+                            <div className="flex flex-wrap gap-2">
+                              <div className="px-2 py-1 bg-amber-900/30 text-amber-200 text-xs rounded border border-amber-500/30">
+                                {event.registrationData.teamCreator} (Leader)
+                              </div>
+                              {event.registrationData.teamMembers.map((member: any, index: number) => (
+                                <div key={index} className="px-2 py-1 bg-slate-600/50 text-slate-300 text-xs rounded">
+                                  {member.email}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="mt-2 sm:mt-0">
-                        <button
-                          onClick={() => handleCreateTeamInvite(event.id!, event.registrationData.teamName!)}
-                          className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                        >
-                          Invite Members
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                   
                 {registeredEventsDetails.filter(event => event.registrationData?.teamName).length === 0 && (
                   <p className="text-cyan-30000">You haven't created any teams yet.</p>
