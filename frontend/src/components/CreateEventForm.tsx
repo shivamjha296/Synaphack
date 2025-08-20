@@ -397,6 +397,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                 <input
                   type="datetime-local"
                   value={formData.timeline.submissionDeadline}
+                  min={formData.timeline.registrationStart || undefined}
                   onChange={(e) => handleInputChange('timeline.submissionDeadline', e.target.value)}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
@@ -509,6 +510,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                         <input
                           type="datetime-local"
                           value={round.startDate}
+                          min={formData.timeline.registrationStart || undefined}
                           onChange={(e) => {
                             const updatedRounds = [...formData.rounds]
                             updatedRounds[index] = { ...round, startDate: e.target.value }
@@ -523,6 +525,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                         <input
                           type="datetime-local"
                           value={round.endDate}
+                          min={round.startDate || formData.timeline.registrationStart || undefined}
                           onChange={(e) => {
                             const updatedRounds = [...formData.rounds]
                             updatedRounds[index] = { ...round, endDate: e.target.value }
@@ -537,6 +540,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                         <input
                           type="datetime-local"
                           value={round.submissionDeadline}
+                          min={formData.timeline.registrationStart || undefined}
                           onChange={(e) => {
                             const updatedRounds = [...formData.rounds]
                             updatedRounds[index] = { ...round, submissionDeadline: e.target.value }
