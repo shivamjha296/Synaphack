@@ -361,6 +361,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                 <input
                   type="datetime-local"
                   value={formData.timeline.registrationEnd}
+                  min={formData.timeline.registrationStart || undefined}
                   onChange={(e) => handleInputChange('timeline.registrationEnd', e.target.value)}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
@@ -372,6 +373,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                 <input
                   type="datetime-local"
                   value={formData.timeline.eventStart}
+                  min={formData.timeline.registrationStart || undefined}
                   onChange={(e) => handleInputChange('timeline.eventStart', e.target.value)}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
@@ -383,6 +385,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                 <input
                   type="datetime-local"
                   value={formData.timeline.eventEnd}
+                  min={formData.timeline.eventStart || undefined}
                   onChange={(e) => handleInputChange('timeline.eventEnd', e.target.value)}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
