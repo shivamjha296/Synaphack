@@ -227,6 +227,29 @@ export const eventService = {
     }
   },
 
+  // Get single event by ID
+  async getEvent(eventId: string): Promise<Event | null> {
+    try {
+      console.log('Getting event:', eventId)
+      
+      const docRef = doc(db, EVENTS_COLLECTION, eventId)
+      const docSnap = await getDoc(docRef)
+      
+      if (docSnap.exists()) {
+        return {
+          id: docSnap.id,
+          ...docSnap.data()
+        } as Event
+      } else {
+        console.log('Event not found:', eventId)
+        return null
+      }
+    } catch (error) {
+      console.error('Error getting event:', error)
+      throw error
+    }
+  },
+
   // Get events by organizer
   async getEventsByOrganizer(organizerId: string): Promise<Event[]> {
     try {

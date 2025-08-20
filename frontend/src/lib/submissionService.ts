@@ -42,6 +42,18 @@ export interface RoundSubmission {
     email: string
     role: string
   }[]
+  // GitMCP Analysis fields
+  gitmcpAnalysis?: {
+    repoName: string
+    description: string
+    techStack: string[]
+    summary: string
+    gitmcpUrl: string
+    source?: string
+  }
+  analysisStatus?: 'pending' | 'completed' | 'failed'
+  analysisError?: string
+  analyzedAt?: Date
 }
 
 export interface SubmissionStats {
@@ -500,6 +512,164 @@ export const submissionService = {
     return {
       isValid: errors.length === 0,
       errors
+    }
+  },
+
+  // ===== GitMCP Integration Functions =====
+
+  /**
+   * Analyze a GitHub repository using GitMCP service
+   */
+  async analyzeGitHubRepository(githubUrl: string) {
+    try {
+      console.log('🔍 Starting GitMCP analysis for:', githubUrl)
+      
+      // Import GitMCP service
+      const { gitMCPService } = await import('./gitMCPService')
+      
+      // Analyze repository
+      const analysis = await gitMCPService.analyzeRepository(githubUrl)
+      console.log('✅ GitMCP analysis completed:', analysis)
+      
+      return analysis
+    } catch (error) {
+      console.error('❌ GitMCP analysis failed:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Submit for a round with automatic GitMCP analysis
+   */
+  async submitForRoundWithAnalysis(
+    eventId: string, 
+    roundId: string, 
+    submissionData: any, 
+    userEmail: string,
+    userName: string,
+    isTeamSubmission: boolean = false,
+    teamData?: any
+  ) {
+    try {
+      console.log('📤 Submitting with GitMCP analysis...')
+      
+      // First, submit normally
+      const submissionId = await submissionService.submitForRound({
+        eventId,
+        roundId,
+        participantEmail: userEmail,
+        participantName: userName,
+        submissionData,
+        status: 'submitted' as const,
+        isTeamSubmission,
+        teamName: teamData?.teamName,
+        teamMembers: teamData?.teamMembers
+      })
+      
+      // If there's a GitHub link, analyze it with GitMCP
+      if (submissionData.githubLink) {
+        try {
+          console.log('🔗 GitHub link detected, starting analysis...')
+          const analysis = await submissionService.analyzeGitHubRepository(submissionData.githubLink)
+          
+          // Update submission with GitMCP analysis
+          await submissionService.updateSubmission(submissionId, {
+            gitmcpAnalysis: analysis,
+            analysisStatus: 'completed' as const,
+            analyzedAt: new Date()
+          })
+          
+          console.log('✅ Submission updated with GitMCP analysis')
+        } catch (analysisError) {
+          console.error('⚠️ GitMCP analysis failed, but submission was successful:', analysisError)
+          
+          // Update submission with analysis error info
+          await submissionService.updateSubmission(submissionId, {
+            analysisStatus: 'failed' as const,
+            analysisError: analysisError instanceof Error ? analysisError.message : 'Unknown error',
+            analyzedAt: new Date()
+          })
+        }
+      }
+      
+      return submissionId
+    } catch (error) {
+      console.error('❌ Submission with GitMCP analysis failed:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Get event submissions with GitMCP analysis
+   */
+  async getEventSubmissionsWithAnalysis(eventId: string) {
+    try {
+      console.log('📊 Loading submissions with GitMCP analysis for event:', eventId)
+      
+      // Get all submissions for the event
+      const submissions = await submissionService.getEventSubmissions(eventId)
+      console.log(`📄 Found ${submissions.length} submissions`)
+      
+      // Analyze any GitHub repositories that haven't been analyzed yet
+      const enhancedSubmissions = await Promise.all(
+        submissions.map(async (submission) => {
+          try {
+            // Check if submission has GitHub link and no analysis yet
+            if (submission.submissionData?.githubLink && !submission.gitmcpAnalysis) {
+              console.log('🔍 Analyzing repository for submission:', submission.id)
+              
+              try {
+                const analysis = await submissionService.analyzeGitHubRepository(submission.submissionData.githubLink)
+                
+                // Update submission with analysis
+                if (submission.id) {
+                  await submissionService.updateSubmission(submission.id, {
+                    gitmcpAnalysis: analysis,
+                    analysisStatus: 'completed' as const,
+                    analyzedAt: new Date()
+                  })
+                }
+                
+                return {
+                  ...submission,
+                  gitmcpAnalysis: analysis,
+                  analysisStatus: 'completed' as const,
+                  analyzedAt: new Date()
+                }
+              } catch (analysisError) {
+                console.error(`❌ Analysis failed for ${submission.id}:`, analysisError)
+                
+                // Update submission with error status
+                if (submission.id) {
+                  await submissionService.updateSubmission(submission.id, {
+                    analysisStatus: 'failed' as const,
+                    analysisError: analysisError instanceof Error ? analysisError.message : 'Unknown error',
+                    analyzedAt: new Date()
+                  })
+                }
+                
+                return {
+                  ...submission,
+                  analysisStatus: 'failed' as const,
+                  analysisError: analysisError instanceof Error ? analysisError.message : 'Unknown error',
+                  analyzedAt: new Date()
+                }
+              }
+            }
+            
+            return submission
+          } catch (error) {
+            console.error('Error processing submission:', error)
+            return submission
+          }
+        })
+      )
+      
+      console.log('✅ Enhanced submissions with GitMCP analysis')
+      return enhancedSubmissions
+    } catch (error) {
+      console.error('❌ Error getting submissions with analysis:', error)
+      throw error
     }
   }
 }
