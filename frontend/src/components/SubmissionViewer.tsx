@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { submissionService, RoundSubmission, SubmissionStats } from '@/lib/submissionService'
+import { judgeInviteService } from '@/lib/judgeInviteService'
 
 interface SubmissionViewerProps {
   event: any
@@ -17,11 +18,56 @@ const SubmissionViewer = ({ event, onClose }: SubmissionViewerProps) => {
   const [reviewMode, setReviewMode] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [score, setScore] = useState('')
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [authChecking, setAuthChecking] = useState(true)
 
   useEffect(() => {
-    loadSubmissions()
-    loadStats()
+    checkUserAuthorization()
   }, [event.id])
+  
+  const checkUserAuthorization = async () => {
+    try {
+      setAuthChecking(true)
+      // Get the current user from localStorage
+      const userData = localStorage.getItem('user')
+      if (!userData) {
+        setIsAuthorized(false)
+        setAuthChecking(false)
+        return
+      }
+      
+      const user = JSON.parse(userData)
+      
+      // Organizers always have access
+      if (user.role === 'organizer') {
+        setIsAuthorized(true)
+        loadSubmissions()
+        loadStats()
+        setAuthChecking(false)
+        return
+      }
+      
+      // For judges, check if they're assigned to this event
+      if (user.role === 'judge') {
+        const isAssigned = await judgeInviteService.isJudgeAssignedToEvent(user.email, event.id)
+        setIsAuthorized(isAssigned)
+        
+        if (isAssigned) {
+          // If authorized, load submissions and stats
+          loadSubmissions()
+          loadStats()
+        }
+      } else {
+        // Other roles are not authorized
+        setIsAuthorized(false)
+      }
+    } catch (error) {
+      console.error('Error checking user authorization:', error)
+      setIsAuthorized(false)
+    } finally {
+      setAuthChecking(false)
+    }
+  }
 
   const loadSubmissions = async () => {
     try {
@@ -97,6 +143,37 @@ const SubmissionViewer = ({ event, onClose }: SubmissionViewerProps) => {
     return round ? round.name : 'Unknown Round'
   }
 
+  if (authChecking) {
+    return (
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="bg-gradient-to-br from-slate-900 to-purple-900 border border-fuchsia-500/30 rounded-xl p-8 w-full max-w-md shadow-2xl text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fuchsia-500 mx-auto mb-4"></div>
+          <p className="text-fuchsia-300 font-medium">Verifying access...</p>
+        </div>
+      </div>
+    )
+  }
+  
+  if (!isAuthorized) {
+    return (
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="bg-gradient-to-br from-slate-900 to-purple-900 border border-fuchsia-500/30 rounded-xl p-8 w-full max-w-md shadow-2xl text-center">
+          <div className="w-16 h-16 bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-red-400 text-2xl">⚠️</span>
+          </div>
+          <h3 className="text-xl font-semibold text-white mb-2">Access Denied</h3>
+          <p className="text-purple-200 mb-6">You are not authorized to view submissions for this event. Please use a valid judge invite code to gain access.</p>
+          <button
+            onClick={onClose}
+            className="bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-400 hover:to-purple-400 text-white px-6 py-2 rounded-lg transition-all font-medium shadow-lg hover:shadow-xl"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    )
+  }
+  
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -182,7 +259,7 @@ const SubmissionViewer = ({ event, onClose }: SubmissionViewerProps) => {
         </div>
 
         {/* Submissions List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto max-h-[calc(100vh-300px)] scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800">
           {filteredSubmissions.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-slate-700 rounded-lg mx-auto mb-4 flex items-center justify-center text-2xl">

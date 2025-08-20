@@ -5,11 +5,23 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import EventCommunication from '../EventCommunication'
 import { Event } from '../../lib/eventService'
+import { judgeInviteService } from '../../lib/judgeInviteService'
 
 interface User {
   email: string
   name: string
   role: string
+}
+
+interface JudgeAssignment {
+  id: string
+  eventId: string
+  eventName: string
+  judgeEmail: string
+  judgeName: string
+  assignedAt: Date
+  status: string
+  inviteCode: string
 }
 
 const JudgeDashboard = () => {
@@ -18,6 +30,11 @@ const JudgeDashboard = () => {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [showCommunication, setShowCommunication] = useState<string | null>(null)
+  const [assignments, setAssignments] = useState<JudgeAssignment[]>([])
+  const [inviteCode, setInviteCode] = useState('')
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [inviteError, setInviteError] = useState('')
+  const [processingInvite, setProcessingInvite] = useState(false)
 
   useEffect(() => {
     // Check if user is logged in
@@ -27,6 +44,7 @@ const JudgeDashboard = () => {
       if (parsedUser.role === 'judge') {
         setUser(parsedUser)
         loadOngoingEvents()
+        loadJudgeAssignments(parsedUser.email)
       } else {
         router.push('/login')
       }
@@ -48,6 +66,15 @@ const JudgeDashboard = () => {
       console.error('Error loading events:', error)
     } finally {
       setLoading(false)
+    }
+  }
+  
+  const loadJudgeAssignments = async (judgeEmail: string) => {
+    try {
+      const assignmentsList = await judgeInviteService.getJudgeAssignmentsByJudge(judgeEmail)
+      setAssignments(assignmentsList)
+    } catch (error) {
+      console.error('Error loading judge assignments:', error)
     }
   }
 
@@ -271,7 +298,7 @@ const JudgeDashboard = () => {
                     </button>
                     <button
                       className="bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-400 hover:to-purple-400 text-white px-4 py-2 rounded-lg text-sm transition-all font-medium shadow-lg hover:shadow-xl"
-                      onClick={() => router.push(`/dashboard/judge/submissions/${event.id}`)}
+                      onClick={() => handleViewSubmissions(event)}
                     >
                       View Submissions
                     </button>
@@ -293,8 +320,106 @@ const JudgeDashboard = () => {
           onClose={() => setShowCommunication(null)}
         />
       )}
+
+      {/* Invite Code Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-gradient-to-br from-slate-900 to-purple-900 border border-fuchsia-500/30 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-semibold text-white mb-4">Enter Judge Invite Code</h3>
+            <p className="text-purple-200 mb-6">Please enter the invite code provided by the event organizer to access submissions.</p>
+            
+            {inviteError && (
+              <div className="bg-red-900/30 border border-red-500 text-red-300 px-4 py-3 rounded-lg mb-4">
+                {inviteError}
+              </div>
+            )}
+            
+            <input
+              type="text"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+              placeholder="Enter invite code"
+              className="w-full bg-slate-800/50 border border-fuchsia-500/30 rounded-lg px-4 py-3 text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 mb-4"
+            />
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="px-4 py-2 text-purple-200 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitInviteCode}
+                disabled={processingInvite}
+                className="bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-400 hover:to-purple-400 text-white px-6 py-2 rounded-lg transition-all font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {processingInvite ? (
+                  <span className="flex items-center">
+                    <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
+                    Verifying...
+                  </span>
+                ) : (
+                  'Submit'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
+
+  // Function to handle viewing submissions
+  async function handleViewSubmissions(event: Event) {
+    // Check if the judge is assigned to this event
+    if (!user) return
+    
+    const isAssigned = assignments.some(assignment => assignment.eventId === event.id)
+    
+    if (isAssigned) {
+      // If assigned, navigate to submissions page
+      router.push(`/dashboard/judge/submissions/${event.id}`)
+    } else {
+      // If not assigned, show invite code modal
+      setInviteCode('')
+      setInviteError('')
+      setShowInviteModal(true)
+    }
+  }
+
+  // Function to handle invite code submission
+  async function handleSubmitInviteCode() {
+    if (!inviteCode.trim() || !user) return
+    
+    setProcessingInvite(true)
+    setInviteError('')
+    
+    try {
+      // Accept the judge invite
+      const success = await judgeInviteService.acceptJudgeInvite(
+        inviteCode.trim(),
+        user.email,
+        user.name
+      )
+      
+      if (success) {
+        // Reload judge assignments
+        await loadJudgeAssignments(user.email)
+        setShowInviteModal(false)
+        
+        // Find the event that matches this invite code
+        const judgeInvite = await judgeInviteService.getJudgeInviteByCode(inviteCode.trim())
+        if (judgeInvite) {
+          router.push(`/dashboard/judge/submissions/${judgeInvite.eventId}`)
+        }
+      }
+    } catch (error: any) {
+      setInviteError(error.message || 'Failed to verify invite code')
+    } finally {
+      setProcessingInvite(false)
+    }
+  }
 }
 
 export default JudgeDashboard

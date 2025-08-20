@@ -7,6 +7,7 @@ import CreateEventForm from '../CreateEventForm'
 import EventCommunication from '../EventCommunication'
 import SubmissionViewer from '../SubmissionViewer'
 import CertificateManager from '../CertificateManager'
+import JudgeInviteModal from '../JudgeInviteModal'
 import { Event } from '../../lib/eventService'
 
 interface User {
@@ -31,6 +32,7 @@ const OrganizerDashboard = () => {
   const [showCommunication, setShowCommunication] = useState<string | null>(null)
   const [showSubmissions, setShowSubmissions] = useState<Event | null>(null)
   const [showCertificates, setShowCertificates] = useState<Event | null>(null)
+  const [showJudgeInvite, setShowJudgeInvite] = useState<Event | null>(null)
 
   useEffect(() => {
     // Check if user is logged in and ensure Firebase auth state
@@ -522,6 +524,13 @@ const OrganizerDashboard = () => {
                           <span>📜</span>
                           <span>Certificates</span>
                         </button>
+                        <button 
+                          onClick={() => setShowJudgeInvite(event)}
+                          className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-400 hover:to-purple-400 text-white rounded-lg text-sm font-medium transition-all shadow-md hover:shadow-lg"
+                        >
+                          <span>👨‍⚖️</span>
+                          <span>Invite Judge</span>
+                        </button>
                       </div>
                       
                       {/* Second Row - Edit/Management Actions */}
@@ -582,6 +591,15 @@ const OrganizerDashboard = () => {
               setEditingEvent(null)
             }}
             onEventCreated={handleEventCreated}
+          />
+        )}
+
+        {/* Judge Invite Modal */}
+        {showJudgeInvite && (
+          <JudgeInviteModal
+            event={showJudgeInvite}
+            onClose={() => setShowJudgeInvite(null)}
+            onInviteCreated={() => {}}
           />
         )}
 
