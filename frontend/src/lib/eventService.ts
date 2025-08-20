@@ -156,15 +156,27 @@ export const eventService = {
       if (!eventData.title || !eventData.organizerId) {
         throw new Error('Missing required fields: title or organizerId')
       }
-      
+
+      // Helper to ensure value is a Date object
+      const toDate = (val: any) => {
+        if (val instanceof Date) return val;
+        if (typeof val === 'string') {
+          // Try ISO first, then fallback
+          const d = new Date(val);
+          if (!isNaN(d.getTime())) return d;
+        }
+        return null;
+      };
+
       // Validate and convert timeline dates
-      const validateDate = (date: Date, fieldName: string) => {
-        if (!date || isNaN(date.getTime())) {
+      const validateDate = (date: any, fieldName: string) => {
+        const d = toDate(date);
+        if (!d || isNaN(d.getTime())) {
           throw new Error(`Invalid date for ${fieldName}`)
         }
-        return Timestamp.fromDate(date)
+        return Timestamp.fromDate(d)
       }
-      
+
       // Convert timeline dates to Timestamps for Firestore
       const firestoreData = {
         ...eventData,
@@ -206,21 +218,33 @@ export const eventService = {
     try {
       const q = query(collection(db, EVENTS_COLLECTION), orderBy('createdAt', 'desc'))
       const querySnapshot = await getDocs(q)
-      
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate(),
-        updatedAt: doc.data().updatedAt?.toDate(),
-        timeline: {
-          ...doc.data().timeline,
-          registrationStart: doc.data().timeline?.registrationStart?.toDate(),
-          registrationEnd: doc.data().timeline?.registrationEnd?.toDate(),
-          eventStart: doc.data().timeline?.eventStart?.toDate(),
-          eventEnd: doc.data().timeline?.eventEnd?.toDate(),
-          submissionDeadline: doc.data().timeline?.submissionDeadline?.toDate(),
+
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        // Convert rounds date fields
+        let rounds = data.rounds || [];
+        rounds = rounds.map((round: any) => ({
+          ...round,
+          startDate: round.startDate && typeof round.startDate.toDate === 'function' ? round.startDate.toDate() : (round.startDate ? new Date(round.startDate) : undefined),
+          endDate: round.endDate && typeof round.endDate.toDate === 'function' ? round.endDate.toDate() : (round.endDate ? new Date(round.endDate) : undefined),
+          submissionDeadline: round.submissionDeadline && typeof round.submissionDeadline.toDate === 'function' ? round.submissionDeadline.toDate() : (round.submissionDeadline ? new Date(round.submissionDeadline) : undefined)
+        }));
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate(),
+          updatedAt: data.updatedAt?.toDate(),
+          timeline: {
+            ...data.timeline,
+            registrationStart: data.timeline?.registrationStart?.toDate(),
+            registrationEnd: data.timeline?.registrationEnd?.toDate(),
+            eventStart: data.timeline?.eventStart?.toDate(),
+            eventEnd: data.timeline?.eventEnd?.toDate(),
+            submissionDeadline: data.timeline?.submissionDeadline?.toDate(),
+          },
+          rounds
         }
-      })) as Event[]
+      }) as Event[]
     } catch (error) {
       console.error('Error getting events:', error)
       throw error
@@ -254,15 +278,15 @@ export const eventService = {
   async getEventsByOrganizer(organizerId: string): Promise<Event[]> {
     try {
       console.log('Getting events for organizer:', organizerId)
-      
+
       // First try to get events with organizerId
       const q = query(
-        collection(db, EVENTS_COLLECTION), 
+        collection(db, EVENTS_COLLECTION),
         where('organizerId', '==', organizerId)
       )
       const querySnapshot = await getDocs(q)
       console.log('Found events with organizerId:', querySnapshot.size)
-      
+
       // If no events found with organizerId, try with organizerName for backward compatibility
       let results = querySnapshot.docs
       if (results.length === 0) {
@@ -272,16 +296,24 @@ export const eventService = {
         )
         const allEventsSnapshot = await getDocs(qByName)
         console.log('Total events in database:', allEventsSnapshot.size)
-        
+
         // For debugging, let's see all events
         allEventsSnapshot.docs.forEach(doc => {
           const data = doc.data()
           console.log('Event:', data.title, 'organizerId:', data.organizerId, 'organizerName:', data.organizerName)
         })
       }
-      
+
       const events = results.map(doc => {
-        const data = doc.data()
+        const data = doc.data();
+        // Convert rounds date fields
+        let rounds = data.rounds || [];
+        rounds = rounds.map((round: any) => ({
+          ...round,
+          startDate: round.startDate && typeof round.startDate.toDate === 'function' ? round.startDate.toDate() : (round.startDate ? new Date(round.startDate) : undefined),
+          endDate: round.endDate && typeof round.endDate.toDate === 'function' ? round.endDate.toDate() : (round.endDate ? new Date(round.endDate) : undefined),
+          submissionDeadline: round.submissionDeadline && typeof round.submissionDeadline.toDate === 'function' ? round.submissionDeadline.toDate() : (round.submissionDeadline ? new Date(round.submissionDeadline) : undefined)
+        }));
         console.log('Event data:', data.title, 'organizerId:', data.organizerId)
         return {
           id: doc.id,
@@ -295,10 +327,11 @@ export const eventService = {
             eventStart: data.timeline?.eventStart?.toDate(),
             eventEnd: data.timeline?.eventEnd?.toDate(),
             submissionDeadline: data.timeline?.submissionDeadline?.toDate(),
-          }
+          },
+          rounds
         }
       }) as Event[]
-      
+
       // Sort by createdAt descending (newest first)
       return events.sort((a, b) => {
         const dateA = a.createdAt || new Date(0)
@@ -351,19 +384,29 @@ export const eventService = {
       console.log('Combined published events:', allPublishedEvents.length)
       
       return allPublishedEvents.map(eventData => {
-        console.log('Published event data:', (eventData as any).title, 'status:', (eventData as any).status)
+        const data: any = eventData
+        console.log('Published event data:', data.title, 'status:', data.status)
+        // Convert rounds date fields to Date like other getters do
+        let rounds = data.rounds || []
+        rounds = rounds.map((round: any) => ({
+          ...round,
+          startDate: round.startDate && typeof round.startDate.toDate === 'function' ? round.startDate.toDate() : (round.startDate ? new Date(round.startDate) : undefined),
+          endDate: round.endDate && typeof round.endDate.toDate === 'function' ? round.endDate.toDate() : (round.endDate ? new Date(round.endDate) : undefined),
+          submissionDeadline: round.submissionDeadline && typeof round.submissionDeadline.toDate === 'function' ? round.submissionDeadline.toDate() : (round.submissionDeadline ? new Date(round.submissionDeadline) : undefined)
+        }))
         return {
-          ...eventData,
-          createdAt: (eventData as any).createdAt?.toDate(),
-          updatedAt: (eventData as any).updatedAt?.toDate(),
+          ...data,
+          createdAt: data.createdAt && typeof data.createdAt.toDate === 'function' ? data.createdAt.toDate() : data.createdAt,
+          updatedAt: data.updatedAt && typeof data.updatedAt.toDate === 'function' ? data.updatedAt.toDate() : data.updatedAt,
           timeline: {
-            ...(eventData as any).timeline,
-            registrationStart: (eventData as any).timeline?.registrationStart?.toDate(),
-            registrationEnd: (eventData as any).timeline?.registrationEnd?.toDate(),
-            eventStart: (eventData as any).timeline?.eventStart?.toDate(),
-            eventEnd: (eventData as any).timeline?.eventEnd?.toDate(),
-            submissionDeadline: (eventData as any).timeline?.submissionDeadline?.toDate(),
-          }
+            ...data.timeline,
+            registrationStart: data.timeline?.registrationStart?.toDate ? data.timeline.registrationStart.toDate() : data.timeline?.registrationStart,
+            registrationEnd: data.timeline?.registrationEnd?.toDate ? data.timeline.registrationEnd.toDate() : data.timeline?.registrationEnd,
+            eventStart: data.timeline?.eventStart?.toDate ? data.timeline.eventStart.toDate() : data.timeline?.eventStart,
+            eventEnd: data.timeline?.eventEnd?.toDate ? data.timeline.eventEnd.toDate() : data.timeline?.eventEnd,
+            submissionDeadline: data.timeline?.submissionDeadline?.toDate ? data.timeline.submissionDeadline.toDate() : data.timeline?.submissionDeadline,
+          },
+          rounds
         }
       }) as Event[]
     } catch (error) {
@@ -376,19 +419,30 @@ export const eventService = {
   async updateEvent(eventId: string, updates: Partial<Event>): Promise<void> {
     try {
       const eventRef = doc(db, EVENTS_COLLECTION, eventId)
-      
+
+      // Helper to ensure value is a Date object
+      const toDate = (val: any) => {
+        if (val instanceof Date) return val;
+        if (typeof val === 'string') {
+          const d = new Date(val);
+          if (!isNaN(d.getTime())) return d;
+        }
+        return null;
+      };
+
       // Process the updates to handle dates and clean undefined values
       const processedUpdates: any = { ...updates }
-      
+
       // Convert timeline dates if present
       if (processedUpdates.timeline) {
-        const validateDate = (date: Date, fieldName: string) => {
-          if (!date || isNaN(date.getTime())) {
+        const validateDate = (date: any, fieldName: string) => {
+          const d = toDate(date);
+          if (!d || isNaN(d.getTime())) {
             throw new Error(`Invalid date for ${fieldName}`)
           }
-          return Timestamp.fromDate(date)
+          return Timestamp.fromDate(d)
         }
-        
+
         processedUpdates.timeline = {
           registrationStart: validateDate(processedUpdates.timeline.registrationStart, 'registrationStart'),
           registrationEnd: validateDate(processedUpdates.timeline.registrationEnd, 'registrationEnd'),
@@ -397,16 +451,17 @@ export const eventService = {
           submissionDeadline: validateDate(processedUpdates.timeline.submissionDeadline, 'submissionDeadline')
         }
       }
-      
+
       // Convert rounds dates if present
       if (processedUpdates.rounds) {
-        const validateDate = (date: Date, fieldName: string) => {
-          if (!date || isNaN(date.getTime())) {
+        const validateDate = (date: any, fieldName: string) => {
+          const d = toDate(date);
+          if (!d || isNaN(d.getTime())) {
             throw new Error(`Invalid date for ${fieldName}`)
           }
-          return Timestamp.fromDate(date)
+          return Timestamp.fromDate(d)
         }
-        
+
         processedUpdates.rounds = processedUpdates.rounds.map((round: any) => ({
           ...round,
           startDate: validateDate(round.startDate, `round ${round.name} startDate`),
@@ -414,13 +469,13 @@ export const eventService = {
           submissionDeadline: validateDate(round.submissionDeadline, `round ${round.name} submissionDeadline`)
         }))
       }
-      
+
       // Clean the data and add update timestamp
       const cleanedUpdates = cleanObjectForFirestore({
         ...processedUpdates,
         updatedAt: Timestamp.now(),
       })
-      
+
       await updateDoc(eventRef, cleanedUpdates)
     } catch (error) {
       console.error('Error updating event:', error)
@@ -656,6 +711,14 @@ export const eventService = {
         
         if (eventDoc.exists()) {
           const eventData = eventDoc.data()
+          // Convert rounds date fields for this event
+          let rounds = eventData.rounds || [];
+          rounds = rounds.map((round: any) => ({
+            ...round,
+            startDate: round.startDate && typeof round.startDate.toDate === 'function' ? round.startDate.toDate() : (round.startDate ? new Date(round.startDate) : undefined),
+            endDate: round.endDate && typeof round.endDate.toDate === 'function' ? round.endDate.toDate() : (round.endDate ? new Date(round.endDate) : undefined),
+            submissionDeadline: round.submissionDeadline && typeof round.submissionDeadline.toDate === 'function' ? round.submissionDeadline.toDate() : (round.submissionDeadline ? new Date(round.submissionDeadline) : undefined)
+          }));
           const event = { 
             id: eventDoc.id, 
             ...eventData,
@@ -668,7 +731,8 @@ export const eventService = {
               eventStart: eventData.timeline?.eventStart?.toDate(),
               eventEnd: eventData.timeline?.eventEnd?.toDate(),
               submissionDeadline: eventData.timeline?.submissionDeadline?.toDate(),
-            }
+            },
+            rounds
           } as Event
           
           console.log('✅ Found event:', event.title)

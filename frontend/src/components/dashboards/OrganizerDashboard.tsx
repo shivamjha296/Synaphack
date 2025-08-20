@@ -736,15 +736,27 @@ const OrganizerDashboard = () => {
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
                             <div>
                               <span className="text-green-20000">Start:</span>
-                              <span className="text-green-20000 ml-1">{new Date(round.startDate).toLocaleDateString()}</span>
+                              <span className="text-green-20000 ml-1">{(() => {
+                                if (!round.startDate) return 'Not set';
+                                const d = new Date(round.startDate);
+                                return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
+                              })()}</span>
                             </div>
                             <div>
                               <span className="text-green-20000">End:</span>
-                              <span className="text-green-20000 ml-1">{new Date(round.endDate).toLocaleDateString()}</span>
+                              <span className="text-green-20000 ml-1">{(() => {
+                                if (!round.endDate) return 'Not set';
+                                const d = new Date(round.endDate);
+                                return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
+                              })()}</span>
                             </div>
                             <div>
                               <span className="text-green-20000">Submission:</span>
-                              <span className="text-green-20000 ml-1">{new Date(round.submissionDeadline).toLocaleDateString()}</span>
+                              <span className="text-green-20000 ml-1">{(() => {
+                                if (!round.submissionDeadline) return 'Not set';
+                                const d = new Date(round.submissionDeadline);
+                                return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
+                              })()}</span>
                             </div>
                           </div>
                           {round.requirements && (
