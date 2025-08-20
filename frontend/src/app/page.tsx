@@ -34,7 +34,7 @@ export default function Home() {
       <div className="absolute inset-0 overflow-hidden">
         {/* Floating Orbs */}
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gray-400/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-gray-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-gradient-to-r from-pink-500/15 to-rose-500/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/2 left-3/4 w-48 h-48 bg-gray-300/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
         
         {/* Grid Pattern */}
@@ -79,7 +79,7 @@ export default function Home() {
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight font-space-grotesk">
-            <span className="bg-gradient-to-r from-gray-300 via-gray-400 to-gray-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
               <TypingAnimation 
                 words={['Innovation', 'Collaboration', 'Creation', 'Excellence']}
                 className="inline-block"
@@ -111,7 +111,7 @@ export default function Home() {
               <AnimatedCounter 
                 end={1200} 
                 suffix="+"
-                className="text-4xl font-bold bg-gradient-to-r from-gray-300 to-gray-400 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform"
+                className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform"
               />
               <div className="text-gray-300">Hackathons Hosted</div>
             </div>
@@ -119,7 +119,7 @@ export default function Home() {
               <AnimatedCounter 
                 end={50000} 
                 suffix="+"
-                className="text-4xl font-bold bg-gradient-to-r from-gray-400 to-gray-500 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform"
+                className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform"
               />
               <div className="text-gray-300">Active Developers</div>
             </div>
@@ -127,7 +127,7 @@ export default function Home() {
               <AnimatedCounter 
                 end={15000} 
                 suffix="+"
-                className="text-4xl font-bold bg-gradient-to-r from-gray-500 to-gray-600 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform"
+                className="text-4xl font-bold bg-gradient-to-r from-pink-400 to-blue-500 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform"
               />
               <div className="text-gray-300">Projects Built</div>
             </div>
@@ -204,7 +204,7 @@ export default function Home() {
               <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto font-poppins">
                 Join thousands of developers, designers, and entrepreneurs building the next big thing
               </p>
-              <Link href="/register" className="inline-flex items-center gap-3 bg-gradient-to-r from-gray-600 via-gray-700 to-gray-800 text-white text-xl px-10 py-5 rounded-full hover:from-gray-700 hover:via-gray-800 hover:to-gray-900 transition-all duration-300 shadow-2xl hover:shadow-gray-500/25 transform hover:scale-105">
+              <Link href="/register" className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white text-xl px-10 py-5 rounded-full hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 transition-all duration-300 shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105">
                 <span>🚀</span>
                 Launch Your Journey
                 <span className="text-lg">→</span>
