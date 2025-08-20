@@ -1,4 +1,4 @@
-# SynapHack 3.0 - Hackathon Platform
+# Build2Skill 3.0 - Advanced Hackathon Platform
 
 A modern hackathon platform built with Next.js 14, TypeScript, Firebase, and TailwindCSS featuring role-based dashboards and real-time event management.
 
@@ -46,9 +46,9 @@ npm run dev
 
 ## Demo Login Credentials
 
-- **Organizer**: `organizer@hackplatform.com` / `organizer123`
-- **Participant**: `participant@hackplatform.com` / `participant123`
-- **Judge**: `judge@hackplatform.com` / `judge123`
+- **Organizer**: `organizer@build2skill.com` / `organizer123`
+- **Participant**: `participant@build2skill.com` / `participant123`
+- **Judge**: `judge@build2skill.com` / `judge123`
 
 ## Project Structure
 

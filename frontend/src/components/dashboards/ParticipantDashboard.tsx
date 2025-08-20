@@ -314,17 +314,17 @@ const ParticipantDashboard = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-900 to-cyan-950 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-green-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-cyan-400 mx-auto"></div>
-          <p className="mt-4 text-cyan-300 font-medium">Loading...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-400 mx-auto"></div>
+          <p className="mt-4 text-green-300 font-medium">Loading...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-900 to-cyan-950">
+    <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-green-950">
       {showTeamInviteModal && (
         <TeamInviteModal
           eventId={showTeamInviteModal.eventId}
@@ -335,22 +335,22 @@ const ParticipantDashboard = () => {
         />
       )}
       {/* Navigation */}
-      <nav className="bg-gradient-to-r from-slate-950/95 via-blue-900/95 to-cyan-900/95 backdrop-blur-sm shadow-lg border-b border-cyan-500/30">
+      <nav className="bg-gradient-to-r from-black/95 via-slate-900/95 to-green-950/95 backdrop-blur-sm shadow-lg border-b border-green-500/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-bold text-cyan-400 drop-shadow-[0_0_10px_rgb(244,114,182)]">
-                HackPlatform
+              <Link href="/" className="text-2xl font-bold text-green-400 drop-shadow-[0_0_10px_rgb(34,197,94)]">
+                Build2Skill
               </Link>
-              <span className="ml-4 px-3 py-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 text-sm rounded-full border border-cyan-400 drop-shadow-[0_0_8px_rgb(244,114,182)]">
+              <span className="ml-4 px-3 py-1 bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 text-sm rounded-full border border-green-400 drop-shadow-[0_0_8px_rgb(34,197,94)]">
                 Participant
               </span>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-blue-200 font-medium">Welcome, {user.name}</span>
+              <span className="text-green-200 font-medium">Welcome, {user.name}</span>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-sm text-cyan-300 hover:text-cyan-100 transition-colors bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-lg border border-cyan-500/30 hover:border-cyan-400"
+                className="px-4 py-2 text-sm text-green-300 hover:text-white transition-colors"
               >
                 Logout
               </button>
@@ -362,48 +362,48 @@ const ParticipantDashboard = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-slate-950/80 via-blue-900/80 to-cyan-900/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 mb-8 shadow-2xl">
+        <div className="bg-gradient-to-r from-slate-950/80 via-blue-900/80 to-cyan-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 mb-8 shadow-2xl">
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 mb-2 drop-shadow-lg">
             Participant Dashboard
           </h1>
-          <p className="text-blue-200 font-medium">
+          <p className="text-green-200 font-medium">
             Join events, manage your team, and submit your amazing projects.
           </p>
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
+          <div className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
             <div className="flex items-center">
-              <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg shadow-lg">
+              <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg shadow-lg">
                 <div className="w-6 h-6 bg-white rounded shadow-sm"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-cyan-300">Events Joined</p>
+                <p className="text-sm font-medium text-green-300">Events Joined</p>
                 <p className="text-2xl font-bold text-white drop-shadow-md">{registeredEventsDetails.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
+          <div className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
             <div className="flex items-center">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg shadow-lg">
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-500 rounded-lg shadow-lg">
                 <div className="w-6 h-6 bg-white rounded shadow-sm"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-cyan-300">Submissions</p>
+                <p className="text-sm font-medium text-green-300">Submissions</p>
                 <p className="text-2xl font-bold text-white drop-shadow-md">3</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
+          <div className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all">
             <div className="flex items-center">
               <div className="p-3 bg-gradient-to-br from-rose-500 to-pink-500 rounded-lg shadow-lg">
                 <div className="w-6 h-6 bg-white rounded shadow-sm"></div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-cyan-300">Team Members</p>
+                <p className="text-sm font-medium text-green-300">Team Members</p>
                 <p className="text-2xl font-bold text-white drop-shadow-md">4</p>
               </div>
             </div>
@@ -412,43 +412,43 @@ const ParticipantDashboard = () => {
 
         {/* Action Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 hover:border-cyan-400 hover:shadow-2xl transition-all cursor-pointer group">
+          <div className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 hover:border-green-400 hover:shadow-2xl transition-all cursor-pointer group">
             <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                 <div className="w-6 h-6 bg-white rounded"></div>
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Browse Events</h3>
-              <p className="text-blue-200 text-sm mb-4">
+              <p className="text-green-200 text-sm mb-4">
                 Discover new hackathons and competitions to join
               </p>
-              <button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white py-2 px-4 rounded-lg hover:from-cyan-400 hover:to-blue-400 transition-all font-medium shadow-lg hover:shadow-xl">
+              <button className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-2 px-4 rounded-lg hover:from-cyan-400 hover:to-blue-400 transition-all font-medium shadow-lg hover:shadow-xl">
                 Browse Events
               </button>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 hover:border-indigo-400 hover:shadow-2xl transition-all cursor-pointer group">
+          <div className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 hover:border-indigo-400 hover:shadow-2xl transition-all cursor-pointer group">
             <div className="text-center">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                 <div className="w-6 h-6 bg-white rounded"></div>
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">My Team</h3>
-              <p className="text-blue-200 text-sm mb-4">
+              <p className="text-green-200 text-sm mb-4">
                 Manage your team members and collaborate
               </p>
-              <button className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-2 px-4 rounded-lg hover:from-blue-400 hover:to-indigo-400 transition-all font-medium shadow-lg hover:shadow-xl">
+              <button className="w-full bg-gradient-to-r from-emerald-500 to-emerald-500 text-white py-2 px-4 rounded-lg hover:from-blue-400 hover:to-indigo-400 transition-all font-medium shadow-lg hover:shadow-xl">
                 View Team
               </button>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 hover:border-blue-400 hover:shadow-2xl transition-all cursor-pointer group">
+          <div className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 hover:border-blue-400 hover:shadow-2xl transition-all cursor-pointer group">
             <div className="text-center">
               <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-pink-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                 <div className="w-6 h-6 bg-white rounded"></div>
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Submit Project</h3>
-              <p className="text-blue-200 text-sm mb-4">
+              <p className="text-green-200 text-sm mb-4">
                 Upload your project and submit to competitions
               </p>
               <button className="w-full bg-gradient-to-r from-rose-500 to-pink-500 text-white py-2 px-4 rounded-lg hover:from-rose-400 hover:to-pink-400 transition-all font-medium shadow-lg hover:shadow-xl">
@@ -459,14 +459,14 @@ const ParticipantDashboard = () => {
 
           <div 
             onClick={() => setShowCertificates(true)}
-            className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 hover:border-cyan-400 hover:shadow-2xl transition-all cursor-pointer group"
+            className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 hover:border-green-400 hover:shadow-2xl transition-all cursor-pointer group"
           >
             <div className="text-center">
               <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl mx-auto mb-4 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                 📜
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">My Certificates</h3>
-              <p className="text-blue-200 text-sm mb-4">
+              <p className="text-green-200 text-sm mb-4">
                 View and download your achievement certificates
               </p>
               <button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-2 px-4 rounded-lg hover:from-amber-400 hover:to-orange-400 transition-all font-medium shadow-lg hover:shadow-xl">
@@ -486,48 +486,48 @@ const ParticipantDashboard = () => {
         )}
 
         {/* Available Events */}
-        <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 mb-6 shadow-xl">
+        <div className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 mb-6 shadow-xl">
           <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg">Available Events</h2>
           
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
-              <span className="ml-2 text-blue-200">Loading events...</span>
+              <span className="ml-2 text-green-200">Loading events...</span>
             </div>
           ) : events.length === 0 ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg mx-auto mb-4 flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg mx-auto mb-4 flex items-center justify-center shadow-lg">
                 <div className="w-8 h-8 bg-white rounded"></div>
               </div>
               <h3 className="text-lg font-medium text-white mb-2">No events available</h3>
-              <p className="text-blue-200">Check back later for new hackathons and competitions</p>
+              <p className="text-green-200">Check back later for new hackathons and competitions</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => (
-                <div key={event.id} className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl hover:border-cyan-400 hover:shadow-2xl transition-all duration-200 overflow-hidden shadow-xl">
+                <div key={event.id} className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl hover:border-green-400 hover:shadow-2xl transition-all duration-200 overflow-hidden shadow-xl">
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-3">
                       <h3 className="font-semibold text-xl text-white leading-tight">{event.title}</h3>
                       <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                         event.status === 'ongoing' ? 'bg-green-900/30 text-green-400 border border-green-600' :
-                        event.status === 'completed' ? 'bg-slate-700 text-blue-200 border border-slate-600' :
-                        event.status === 'published' ? 'bg-blue-900/30 text-blue-400 border border-blue-600' :
+                        event.status === 'completed' ? 'bg-slate-700 text-green-200 border border-slate-600' :
+                        event.status === 'published' ? 'bg-blue-900/30 text-green-400 border border-blue-600' :
                         'bg-yellow-900/30 text-yellow-400 border border-yellow-600'
                       }`}>
                         {event.status}
                       </span>
                     </div>
                     
-                    <p className="text-sm text-blue-200 mb-4 line-clamp-2">{event.description}</p>
+                    <p className="text-sm text-green-200 mb-4 line-clamp-2">{event.description}</p>
                     
                     <div className="space-y-3 mb-4">
                       <div className="flex flex-wrap gap-2">
-                        <span className="px-2 py-1 bg-cyan-900/30 text-cyan-300 rounded-md text-xs font-medium">{event.theme}</span>
-                        <span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded-md text-xs font-medium">{event.eventType}</span>
+                        <span className="px-2 py-1 bg-cyan-900/30 text-green-300 rounded-md text-xs font-medium">{event.theme}</span>
+                        <span className="px-2 py-1 bg-slate-900/30 text-green-300 rounded-md text-xs font-medium">{event.eventType}</span>
                       </div>
                       
-                      <div className="text-sm text-blue-200 space-y-1">
+                      <div className="text-sm text-green-200 space-y-1">
                         <div className="flex justify-between">
                           <span>Registration Fee:</span>
                           <span className="text-white font-medium">₹{event.registrationFee}</span>
@@ -538,24 +538,24 @@ const ParticipantDashboard = () => {
                         </div>
                         <div className="flex justify-between">
                           <span>Organizer:</span>
-                          <span className="text-cyan-400">{event.organizerName}</span>
+                          <span className="text-green-400">{event.organizerName}</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="px-6 py-4 bg-gradient-to-r from-blue-950/50 to-cyan-950/50 border-t border-cyan-500/30">
+                  <div className="px-6 py-4 bg-gradient-to-r from-slate-900/50 to-green-950/50 border-t border-green-500/30">
                     <div className="flex justify-between items-center">
                       <div className="flex space-x-3">
                         <button 
                           onClick={() => setSelectedEvent(event)}
-                          className="text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors"
+                          className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors"
                         >
                           View Details
                         </button>
                         {isRegistered(event.id!) && (
                           <button 
                             onClick={() => setShowCommunication(event.id!)}
-                            className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                            className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors"
                           >
                             💬 Chat
                           </button>
@@ -565,10 +565,10 @@ const ParticipantDashboard = () => {
                         onClick={() => handleRegisterClick(event)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg ${
                           event.status === 'completed'
-                            ? 'bg-slate-600 text-blue-200 cursor-not-allowed'
+                            ? 'bg-slate-600 text-green-200 cursor-not-allowed'
                             : isRegistered(event.id!)
                             ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white cursor-default'
-                            : 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white'
+                            : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-cyan-400 hover:to-blue-400 text-white'
                         }`}
                         disabled={event.status === 'completed' || isRegistered(event.id!)}
                       >
@@ -588,20 +588,20 @@ const ParticipantDashboard = () => {
         </div>
 
         {/* Registered Events */}
-        <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 mb-6 shadow-xl">
+        <div className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 mb-6 shadow-xl">
           <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg">My Registered Events</h2>
           {registeredEventsLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
-              <span className="ml-2 text-blue-200">Loading registered events...</span>
+              <span className="ml-2 text-green-200">Loading registered events...</span>
             </div>
           ) : registeredEventsDetails.length === 0 ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg mx-auto mb-4 flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg mx-auto mb-4 flex items-center justify-center shadow-lg">
                 <div className="w-8 h-8 bg-white rounded"></div>
               </div>
               <h3 className="text-lg font-medium text-white mb-2">No registered events</h3>
-              <p className="text-blue-200">Register for events above to see them here</p>
+              <p className="text-green-200">Register for events above to see them here</p>
             </div>
           ) : (
             <div className="space-y-10">
@@ -625,32 +625,32 @@ const ParticipantDashboard = () => {
                               <div className="flex justify-between items-center mb-2">
                                 <h4 className="font-medium text-white text-base">Round {index + 1}: {round.name}</h4>
                                 {round.maxParticipants && (
-                                  <span className="text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded">
+                                  <span className="text-xs bg-slate-900/30 text-green-300 px-2 py-1 rounded">
                                     Max: {round.maxParticipants}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-blue-200 text-sm mb-3">{round.description}</p>
+                              <p className="text-green-200 text-sm mb-3">{round.description}</p>
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs mb-2">
                                 <div>
-                                  <span className="text-cyan-300 font-semibold">Start:</span>
-                                  <span className="text-blue-200 ml-1">{(() => {
+                                  <span className="text-green-300 font-semibold">Start:</span>
+                                  <span className="text-green-200 ml-1">{(() => {
                                     if (!round.startDate) return 'Not set';
                                     const d = new Date(round.startDate);
                                     return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
                                   })()}</span>
                                 </div>
                                 <div>
-                                  <span className="text-cyan-300 font-semibold">End:</span>
-                                  <span className="text-blue-200 ml-1">{(() => {
+                                  <span className="text-green-300 font-semibold">End:</span>
+                                  <span className="text-green-200 ml-1">{(() => {
                                     if (!round.endDate) return 'Not set';
                                     const d = new Date(round.endDate);
                                     return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
                                   })()}</span>
                                 </div>
                                 <div>
-                                  <span className="text-cyan-300 font-semibold">Submission:</span>
-                                  <span className="text-blue-200 ml-1">{(() => {
+                                  <span className="text-green-300 font-semibold">Submission:</span>
+                                  <span className="text-green-200 ml-1">{(() => {
                                     if (!round.submissionDeadline) return 'Not set';
                                     const d = new Date(round.submissionDeadline);
                                     return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
@@ -659,14 +659,14 @@ const ParticipantDashboard = () => {
                               </div>
                               {round.requirements && (
                                 <div className="mt-1">
-                                  <span className="text-cyan-300 text-xs font-semibold">Requirements:</span>
-                                  <span className="text-blue-200 text-xs ml-1">{round.requirements}</span>
+                                  <span className="text-green-300 text-xs font-semibold">Requirements:</span>
+                                  <span className="text-green-200 text-xs ml-1">{round.requirements}</span>
                                 </div>
                               )}
                               {round.eliminationCriteria && (
                                 <div className="mt-1">
-                                  <span className="text-cyan-300 text-xs font-semibold">Elimination:</span>
-                                  <span className="text-blue-200 text-xs ml-1">{round.eliminationCriteria}</span>
+                                  <span className="text-green-300 text-xs font-semibold">Elimination:</span>
+                                  <span className="text-green-200 text-xs ml-1">{round.eliminationCriteria}</span>
                                 </div>
                               )}
                             </div>
@@ -682,21 +682,21 @@ const ParticipantDashboard = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 shadow-xl">
+        <div className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 shadow-xl">
           <h2 className="text-xl font-semibold text-white mb-4 drop-shadow-lg">Recent Activity</h2>
           {/* Team Invites Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white">Your Team Invites</h3>
             
             {teamInvites.length === 0 ? (
-              <p className="text-blue-200">You haven't created any team invites yet.</p>
+              <p className="text-green-200">You haven't created any team invites yet.</p>
             ) : (
               <div className="space-y-3">
                 {teamInvites.map((invite) => (
-                  <div key={invite.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-gradient-to-r from-blue-950/50 to-cyan-950/50 rounded-lg border border-cyan-500/30">
+                  <div key={invite.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-gradient-to-r from-slate-900/50 to-green-950/50 rounded-lg border border-green-500/30">
                     <div className="mb-2 sm:mb-0">
                       <div className="text-white font-medium">{invite.teamName}</div>
-                      <div className="text-sm text-blue-200">Expires: {invite.expiresAt.toLocaleDateString()}</div>
+                      <div className="text-sm text-green-200">Expires: {invite.expiresAt.toLocaleDateString()}</div>
                     </div>
                     <div className="flex space-x-2">
                       <button
@@ -704,7 +704,7 @@ const ParticipantDashboard = () => {
                           navigator.clipboard.writeText(teamInviteService.getInviteUrl(invite.inviteCode))
                           alert('Invite link copied to clipboard!')
                         }}
-                        className="px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm rounded hover:from-cyan-400 hover:to-blue-400 transition-all"
+                        className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm rounded hover:from-cyan-400 hover:to-blue-400 transition-all"
                       >
                         Copy Link
                       </button>
@@ -731,7 +731,7 @@ const ParticipantDashboard = () => {
                     <div key={event.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-4 bg-slate-700/50 rounded-lg border border-slate-600">
                       <div>
                         <div className="text-white00 font-medium">{event.registrationData.teamName}</div>
-                        <div className="text-sm text-cyan-30000">{event.title}</div>
+                        <div className="text-sm text-green-30000">{event.title}</div>
                       </div>
                       <div className="mt-2 sm:mt-0">
                         <button
@@ -745,7 +745,7 @@ const ParticipantDashboard = () => {
                   ))}
                   
                 {registeredEventsDetails.filter(event => event.registrationData?.teamName).length === 0 && (
-                  <p className="text-cyan-30000">You haven't created any teams yet.</p>
+                  <p className="text-green-30000">You haven't created any teams yet.</p>
                 )}
               </div>
             </div>
@@ -756,15 +756,15 @@ const ParticipantDashboard = () => {
       {/* Event Details Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-slate-800/70 to-blue-800/70 backdrop-blur-sm00 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-cyan-500/3000">
+          <div className="bg-gradient-to-br from-slate-800/70 to-blue-800/70 backdrop-blur-sm00 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-green-500/3000">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-cyan-500/3000">
+            <div className="flex items-center justify-between p-6 border-b border-green-500/3000">
               <div className="flex items-center space-x-4">
                 <h2 className="text-2xl font-bold text-white00">{selectedEvent.title}</h2>
                 <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                   selectedEvent.status === 'ongoing' ? 'bg-green-900/30 text-green-400 border border-green-600' :
-                  selectedEvent.status === 'completed' ? 'bg-slate-700 text-blue-20000 border border-slate-600' :
-                  selectedEvent.status === 'published' ? 'bg-blue-900/30 text-blue-400 border border-blue-600' :
+                  selectedEvent.status === 'completed' ? 'bg-slate-700 text-green-20000 border border-slate-600' :
+                  selectedEvent.status === 'published' ? 'bg-blue-900/30 text-green-400 border border-blue-600' :
                   'bg-yellow-900/30 text-yellow-400 border border-yellow-600'
                 }`}>
                   {selectedEvent.status}
@@ -772,7 +772,7 @@ const ParticipantDashboard = () => {
               </div>
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="text-cyan-30000 hover:text-white00 text-2xl"
+                className="text-green-30000 hover:text-white00 text-2xl"
               >
                 ×
               </button>
@@ -783,7 +783,7 @@ const ParticipantDashboard = () => {
               {/* Description */}
               <div>
                 <h3 className="text-lg font-semibold text-white00 mb-2">About the Event</h3>
-                <p className="text-blue-20000">{selectedEvent.description}</p>
+                <p className="text-green-20000">{selectedEvent.description}</p>
               </div>
 
               {/* Event Details Grid */}
@@ -792,23 +792,23 @@ const ParticipantDashboard = () => {
                   <h3 className="text-lg font-semibold text-white00">Event Information</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-cyan-30000">Theme:</span>
+                      <span className="text-green-30000">Theme:</span>
                       <span className="text-white00">{selectedEvent.theme}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-cyan-30000">Type:</span>
+                      <span className="text-green-30000">Type:</span>
                       <span className="text-white00 capitalize">{selectedEvent.eventType}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-cyan-30000">Location:</span>
+                      <span className="text-green-30000">Location:</span>
                       <span className="text-white00">{selectedEvent.location}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-cyan-30000">Max Participants:</span>
+                      <span className="text-green-30000">Max Participants:</span>
                       <span className="text-white00">{selectedEvent.maxParticipants}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-cyan-30000">Registration Fee:</span>
+                      <span className="text-green-30000">Registration Fee:</span>
                       <span className="text-white00">₹{selectedEvent.registrationFee}</span>
                     </div>
                   </div>
@@ -818,23 +818,23 @@ const ParticipantDashboard = () => {
                   <h3 className="text-lg font-semibold text-white00">Timeline</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-cyan-30000">Registration Start:</span>
+                      <span className="text-green-30000">Registration Start:</span>
                       <span className="text-white00">{new Date(selectedEvent.timeline.registrationStart).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-cyan-30000">Registration End:</span>
+                      <span className="text-green-30000">Registration End:</span>
                       <span className="text-white00">{new Date(selectedEvent.timeline.registrationEnd).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-cyan-30000">Event Start:</span>
+                      <span className="text-green-30000">Event Start:</span>
                       <span className="text-white00">{new Date(selectedEvent.timeline.eventStart).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-cyan-300">Event End:</span>
+                      <span className="text-green-300">Event End:</span>
                       <span className="text-white">{new Date(selectedEvent.timeline.eventEnd).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-cyan-300">Submission Deadline:</span>
+                      <span className="text-green-300">Submission Deadline:</span>
                       <span className="text-white">{new Date(selectedEvent.timeline.submissionDeadline).toLocaleString()}</span>
                     </div>
                   </div>
@@ -851,32 +851,32 @@ const ParticipantDashboard = () => {
                         <div className="flex justify-between items-start mb-2">
                           <h4 className="font-medium text-white00">Round {index + 1}: {round.name}</h4>
                           {round.maxParticipants && (
-                            <span className="text-xs bg-blue-900/30 text-blue-300 px-2 py-1 rounded">
+                            <span className="text-xs bg-slate-900/30 text-green-300 px-2 py-1 rounded">
                               Max: {round.maxParticipants}
                             </span>
                           )}
                         </div>
-                        <p className="text-blue-20000 text-sm mb-3">{round.description}</p>
+                        <p className="text-green-20000 text-sm mb-3">{round.description}</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
                           <div>
-                            <span className="text-cyan-30000">Start:</span>
-                            <span className="text-cyan-30000 ml-1">{(() => {
+                            <span className="text-green-30000">Start:</span>
+                            <span className="text-green-30000 ml-1">{(() => {
                               if (!round.startDate) return 'Not set';
                               const d = new Date(round.startDate);
                               return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
                             })()}</span>
                           </div>
                           <div>
-                            <span className="text-cyan-30000">End:</span>
-                            <span className="text-cyan-30000 ml-1">{(() => {
+                            <span className="text-green-30000">End:</span>
+                            <span className="text-green-30000 ml-1">{(() => {
                               if (!round.endDate) return 'Not set';
                               const d = new Date(round.endDate);
                               return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
                             })()}</span>
                           </div>
                           <div>
-                            <span className="text-cyan-30000">Submission:</span>
-                            <span className="text-cyan-30000 ml-1">{(() => {
+                            <span className="text-green-30000">Submission:</span>
+                            <span className="text-green-30000 ml-1">{(() => {
                               if (!round.submissionDeadline) return 'Not set';
                               const d = new Date(round.submissionDeadline);
                               return isNaN(d.getTime()) ? 'Not set' : d.toLocaleString();
@@ -885,14 +885,14 @@ const ParticipantDashboard = () => {
                         </div>
                         {round.requirements && (
                           <div className="mt-2">
-                            <span className="text-cyan-30000 text-xs">Requirements:</span>
-                            <span className="text-cyan-30000 text-xs ml-1">{round.requirements}</span>
+                            <span className="text-green-30000 text-xs">Requirements:</span>
+                            <span className="text-green-30000 text-xs ml-1">{round.requirements}</span>
                           </div>
                         )}
                         {round.eliminationCriteria && (
                           <div className="mt-2">
-                            <span className="text-cyan-30000 text-xs">Elimination Criteria:</span>
-                            <span className="text-cyan-30000 text-xs ml-1">{round.eliminationCriteria}</span>
+                            <span className="text-green-30000 text-xs">Elimination Criteria:</span>
+                            <span className="text-green-30000 text-xs ml-1">{round.eliminationCriteria}</span>
                           </div>
                         )}
                       </div>
@@ -906,21 +906,21 @@ const ParticipantDashboard = () => {
                 <h3 className="text-lg font-semibold text-white00 mb-3">Contact Information</h3>
                 <div className="bg-slate-700/50 rounded-lg p-4 space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-cyan-30000">Organizer:</span>
+                    <span className="text-green-30000">Organizer:</span>
                     <span className="text-white00">{selectedEvent.organizerName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-cyan-30000">Email:</span>
-                    <span className="text-blue-400">{selectedEvent.contactEmail}</span>
+                    <span className="text-green-30000">Email:</span>
+                    <span className="text-green-400">{selectedEvent.contactEmail}</span>
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 pt-4 border-t border-cyan-500/3000">
+              <div className="flex justify-end space-x-3 pt-4 border-t border-green-500/3000">
                 <button
                   onClick={() => setSelectedEvent(null)}
-                  className="px-6 py-2 text-cyan-30000 hover:text-blue-20000 transition-colors"
+                  className="px-6 py-2 text-green-30000 hover:text-green-20000 transition-colors"
                 >
                   Close
                 </button>
@@ -931,7 +931,7 @@ const ParticipantDashboard = () => {
                   }}
                   className={`px-6 py-2 rounded-lg font-medium transition-colors ${
                     selectedEvent.status === 'completed'
-                      ? 'bg-slate-600 text-cyan-30000 cursor-not-allowed'
+                      ? 'bg-slate-600 text-green-30000 cursor-not-allowed'
                       : isRegistered(selectedEvent.id!)
                       ? 'bg-green-600 text-white cursor-default'
                       : 'bg-blue-600 hover:bg-blue-700 text-white'

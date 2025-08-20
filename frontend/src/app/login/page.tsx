@@ -75,7 +75,7 @@ const LoginPage = () => {
         {/* Header */}
         <div className="text-center">
           <Link href="/" className="text-3xl font-bold text-blue-400">
-            HackPlatform
+            Build2Skill
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-slate-100">
             Sign in to your account

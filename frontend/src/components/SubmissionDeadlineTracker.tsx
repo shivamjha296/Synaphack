@@ -115,7 +115,7 @@ const SubmissionDeadlineTracker = ({
     switch (status) {
       case 'urgent': return 'bg-red-500/20 border-red-500/30 text-red-300'
       case 'warning': return 'bg-yellow-500/20 border-yellow-500/30 text-yellow-300'
-      case 'normal': return 'bg-cyan-500/20 border-cyan-500/30 text-cyan-300'
+      case 'normal': return 'bg-green-500/20 border-green-500/30 text-green-300'
       case 'passed': return 'bg-gray-500/20 border-gray-500/30 text-gray-300'
       default: return 'bg-gray-500/20 border-gray-500/30 text-gray-300'
     }
@@ -148,7 +148,7 @@ const SubmissionDeadlineTracker = ({
   }
 
   return (
-    <div className="bg-gradient-to-br from-slate-950/80 to-blue-950/80 backdrop-blur-sm border border-cyan-500/30 rounded-xl p-6 mb-6 shadow-xl">
+    <div className="bg-gradient-to-br from-black/80 to-slate-900/80 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 mb-6 shadow-xl">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <h3 className="text-xl font-semibold text-white drop-shadow-lg">Submission Deadlines</h3>
@@ -161,7 +161,7 @@ const SubmissionDeadlineTracker = ({
         {deadlineAlerts.length > 5 && (
           <button
             onClick={() => setShowAll(!showAll)}
-            className="text-cyan-300 hover:text-cyan-200 text-sm font-medium transition-colors"
+            className="text-green-300 hover:text-green-200 text-sm font-medium transition-colors"
           >
             {showAll ? 'Show Less' : `Show All (${deadlineAlerts.length})`}
           </button>
@@ -186,13 +186,13 @@ const SubmissionDeadlineTracker = ({
                       {alert.eventTitle} - {alert.roundName}
                     </h4>
                     <div className="flex items-center space-x-4 mt-1 text-sm">
-                      <span className="text-blue-200">
+                      <span className="text-green-200">
                         Deadline: {alert.deadline.toLocaleDateString()} at {alert.deadline.toLocaleTimeString()}
                       </span>
                       <span className={`font-medium ${
                         alert.status === 'urgent' ? 'text-red-300' :
                         alert.status === 'warning' ? 'text-yellow-300' :
-                        'text-cyan-300'
+                        'text-green-300'
                       }`}>
                         {formatTimeLeft(alert.hoursLeft)}
                       </span>
@@ -227,7 +227,7 @@ const SubmissionDeadlineTracker = ({
                           ? 'bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-400 hover:to-pink-400 text-white'
                           : alert.status === 'warning'
                           ? 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white'
-                          : 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white'
+                          : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white'
                       }`}
                     >
                       Submit Now

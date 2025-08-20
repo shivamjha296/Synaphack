@@ -53,7 +53,7 @@ const OrganizerDashboard = () => {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="text-2xl font-bold text-blue-600">
-                HackPlatform
+                Build2Skill
               </Link>
               <span className="ml-4 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
                 Organizer
