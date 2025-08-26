@@ -5,16 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { eventService } from '@/lib/eventService'
 import { submissionService } from '@/lib/submissionService'
+import { judgeInviteService } from '@/lib/judgeInviteService'
 import type { Event } from '@/lib/eventService'
 import type { RoundSubmission } from '@/lib/submissionService'
 
-interface GitMCPResponse {
-  repoName: string
-  description: string
-  techStack: string[]
-  summary: string
+interface GitMCPInfo {
   gitmcpUrl: string
-  source?: string
 }
 
 export default function EventSubmissions({ params }: { params: { eventId: string } }) {
@@ -23,17 +19,43 @@ export default function EventSubmissions({ params }: { params: { eventId: string
   const [event, setEvent] = useState<Event | null>(null)
   const [submissions, setSubmissions] = useState<RoundSubmission[]>([])
   const [loading, setLoading] = useState(true)
-  const [analyzing, setAnalyzing] = useState(false)
   const [selectedSubmission, setSelectedSubmission] = useState<RoundSubmission | null>(null)
   const [score, setScore] = useState(0)
   const [feedback, setFeedback] = useState('')
   const [scoringSubmissionId, setScoringSubmissionId] = useState<string | null>(null)
+  const [accessDenied, setAccessDenied] = useState(false)
+  const [checkingAccess, setCheckingAccess] = useState(true)
 
   useEffect(() => {
     if (user) {
-      loadEventAndSubmissions()
+      checkAccessAndLoadData()
     }
   }, [user, params.eventId])
+
+  const checkAccessAndLoadData = async () => {
+    try {
+      setCheckingAccess(true)
+      setAccessDenied(false)
+      
+      // Check if judge is assigned to this event
+      const isAssigned = await judgeInviteService.isJudgeAssignedToEvent(user!.email, params.eventId)
+      
+      if (!isAssigned) {
+        setAccessDenied(true)
+        setCheckingAccess(false)
+        return
+      }
+      
+      // If assigned, load event and submissions
+      await loadEventAndSubmissions()
+      
+    } catch (error) {
+      console.error('Error checking access:', error)
+      setAccessDenied(true)
+    } finally {
+      setCheckingAccess(false)
+    }
+  }
 
   const loadEventAndSubmissions = async () => {
     try {
@@ -43,11 +65,9 @@ export default function EventSubmissions({ params }: { params: { eventId: string
       const eventData = await eventService.getEvent(params.eventId)
       setEvent(eventData)
       
-      // Load submissions with GitMCP analysis
-      setAnalyzing(true)
-      const submissionsData = await submissionService.getEventSubmissionsWithAnalysis(params.eventId)
+      // Load submissions 
+      const submissionsData = await submissionService.getEventSubmissions(params.eventId)
       setSubmissions(submissionsData)
-      setAnalyzing(false)
       
     } catch (error) {
       console.error('Error loading event and submissions:', error)
@@ -86,59 +106,60 @@ export default function EventSubmissions({ params }: { params: { eventId: string
     }
   }
 
-  const renderGitMCPAnalysis = (analysis: GitMCPResponse) => {
-    const isGitHubFallback = analysis.gitmcpUrl?.includes('GitMCP unavailable') || analysis.source === 'github-api-fallback'
-    
+  const renderGitMCPUrl = (gitmcpUrl: string) => {
     return (
       <div className="mt-4 p-4 bg-gradient-to-r from-purple-900/20 to-blue-900/20 rounded-lg border border-purple-500/30">
         <h4 className="text-lg font-semibold text-purple-300 mb-3 flex items-center">
-          <span className="mr-2">🔍</span>
-          Repository Analysis
-          {isGitHubFallback && (
-            <span className="ml-2 px-2 py-1 bg-yellow-600/30 text-yellow-200 text-xs rounded">
-              GitHub API
-            </span>
-          )}
+          <span className="mr-2">�</span>
+          GitMCP Analysis
         </h4>
         
-        {isGitHubFallback && (
-          <div className="mb-3 p-2 bg-yellow-900/20 border border-yellow-500/30 rounded text-xs text-yellow-200">
-            <strong>Note:</strong> Using GitHub API for analysis. GitMCP service is currently unavailable.
+        <div>
+          <p className="text-sm text-slate-300 mb-2">
+            <strong>Repository Analysis:</strong> View detailed code analysis on GitMCP
+          </p>
+          <a 
+            href={gitmcpUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm"
+          >
+            <span className="mr-2">🔍</span>
+            View GitMCP Analysis →
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  if (checkingAccess) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6">
+        <div className="w-16 h-16 border-4 border-fuchsia-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <div className="text-lg text-slate-300">Checking access permissions...</div>
+      </div>
+    )
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-6">
+        <div className="max-w-md text-center">
+          <div className="w-16 h-16 bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-red-400 text-2xl">🚫</span>
           </div>
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-slate-300"><strong>Repository:</strong> {analysis.repoName}</p>
-            <p className="text-sm text-slate-300 mt-2"><strong>Description:</strong> {analysis.description}</p>
-            {analysis.techStack.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm text-slate-300"><strong>Tech Stack:</strong></p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {analysis.techStack.map((tech, idx) => (
-                    <span key={idx} className="px-2 py-1 bg-blue-600/30 text-blue-200 rounded text-xs">
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          <div>
-            <p className="text-sm text-slate-300"><strong>Analysis Summary:</strong></p>
-            <div className="text-xs text-slate-400 mt-1 max-h-32 overflow-y-auto">
-              {analysis.summary}
-            </div>
-            {!isGitHubFallback && (
-              <a 
-                href={analysis.gitmcpUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-block mt-2 text-xs text-purple-400 hover:text-purple-300 underline"
-              >
-                View GitMCP Analysis →
-              </a>
-            )}
+          <h2 className="text-2xl text-slate-200 font-semibold mb-4">Access Denied</h2>
+          <p className="text-slate-400 mb-6">
+            You need to be invited as a judge for this event to view submissions. 
+            Please contact the event organizer for an invite code.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push('/judge-dashboard')}
+              className="w-full bg-gradient-to-r from-fuchsia-500 to-purple-500 hover:from-fuchsia-400 hover:to-purple-400 text-white px-6 py-3 rounded-lg transition-all font-medium shadow-lg hover:shadow-xl"
+            >
+              Return to Dashboard
+            </button>
           </div>
         </div>
       </div>
@@ -174,15 +195,6 @@ export default function EventSubmissions({ params }: { params: { eventId: string
           </button>
           <h1 className="text-3xl font-bold mb-2">Judge Submissions</h1>
           <h2 className="text-xl text-slate-300">{event.title}</h2>
-          
-          {analyzing && (
-            <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
-              <p className="text-yellow-200 flex items-center">
-                <span className="animate-spin mr-2">🔄</span>
-                Analyzing repositories... (Using GitHub API as GitMCP fallback)
-              </p>
-            </div>
-          )}
         </div>
 
         {submissions.length === 0 ? (
@@ -234,16 +246,47 @@ export default function EventSubmissions({ params }: { params: { eventId: string
                     
                     <div className="space-y-2">
                       {submission.submissionData.githubLink && (
-                        <div>
-                          <strong className="text-sm">GitHub:</strong>
-                          <a 
-                            href={submission.submissionData.githubLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="ml-2 text-blue-400 hover:text-blue-300 underline text-sm"
-                          >
-                            {submission.submissionData.githubLink}
-                          </a>
+                        <div className="space-y-2">
+                          <div>
+                            <strong className="text-sm">GitHub Repository:</strong>
+                            <a 
+                              href={submission.submissionData.githubLink} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="ml-2 text-blue-400 hover:text-blue-300 underline text-sm"
+                            >
+                              {submission.submissionData.githubLink}
+                            </a>
+                          </div>
+                          <div>
+                            <strong className="text-sm">Code Analysis:</strong>
+                            {(() => {
+                              // Generate GitMCP URL
+                              let gitmcpUrl = submission.submissionData.gitmcpUrl;
+                              if (!gitmcpUrl) {
+                                const githubUrl = submission.submissionData.githubLink;
+                                const cleanUrl = githubUrl.endsWith('/') ? githubUrl.slice(0, -1) : githubUrl;
+                                const match = cleanUrl.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+(?:\.git)?)$/);
+                                if (match) {
+                                  const [, owner, repo] = match;
+                                  gitmcpUrl = `https://gitmcp.io/${owner}/${repo}/chat`;
+                                }
+                              }
+                              return gitmcpUrl ? (
+                                <a 
+                                  href={gitmcpUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="ml-2 inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition-colors"
+                                >
+                                  <span className="mr-2">🔍</span>
+                                  View GitMCP Analysis →
+                                </a>
+                              ) : (
+                                <span className="ml-2 text-slate-500 text-sm">No analysis available</span>
+                              );
+                            })()}
+                          </div>
                         </div>
                       )}
                       
@@ -291,17 +334,6 @@ export default function EventSubmissions({ params }: { params: { eventId: string
                   </div>
 
                   <div>
-                    {/* GitMCP Analysis */}
-                    {submission.gitmcpAnalysis && renderGitMCPAnalysis(submission.gitmcpAnalysis)}
-                    
-                    {submission.analysisStatus === 'failed' && (
-                      <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
-                        <p className="text-red-200 text-sm">
-                          <strong>Analysis Failed:</strong> {submission.analysisError || 'Unknown error occurred during repository analysis'}
-                        </p>
-                      </div>
-                    )}
-
                     {/* Scoring Section */}
                     <div className="mt-4 p-4 bg-slate-700/50 rounded-lg">
                       <h4 className="font-semibold mb-3">Judge Scoring</h4>

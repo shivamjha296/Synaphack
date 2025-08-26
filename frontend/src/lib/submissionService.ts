@@ -30,6 +30,7 @@ export interface RoundSubmission {
     }[]
     description?: string
     tags?: string[]
+    gitmcpUrl?: string  // Auto-generated GitMCP analysis URL
   }
   submittedAt: Date
   updatedAt: Date
@@ -42,18 +43,6 @@ export interface RoundSubmission {
     email: string
     role: string
   }[]
-  // GitMCP Analysis fields
-  gitmcpAnalysis?: {
-    repoName: string
-    description: string
-    techStack: string[]
-    summary: string
-    gitmcpUrl: string
-    source?: string
-  }
-  analysisStatus?: 'pending' | 'completed' | 'failed'
-  analysisError?: string
-  analyzedAt?: Date
 }
 
 export interface SubmissionStats {
@@ -518,30 +507,30 @@ export const submissionService = {
   // ===== GitMCP Integration Functions =====
 
   /**
-   * Analyze a GitHub repository using GitMCP service
+   * Generate GitMCP URL from GitHub URL
    */
-  async analyzeGitHubRepository(githubUrl: string) {
+  generateGitMCPUrl(githubUrl: string): string {
     try {
-      console.log('🔍 Starting GitMCP analysis for:', githubUrl)
+      console.log('� Generating GitMCP URL for:', githubUrl)
       
       // Import GitMCP service
-      const { gitMCPService } = await import('./gitMCPService')
+      const { gitMCPService } = require('./gitMCPService')
       
-      // Analyze repository
-      const analysis = await gitMCPService.analyzeRepository(githubUrl)
-      console.log('✅ GitMCP analysis completed:', analysis)
+      // Generate GitMCP URL
+      const gitmcpUrl = gitMCPService.getGitMCPUrl(githubUrl)
+      console.log('✅ GitMCP URL generated:', gitmcpUrl)
       
-      return analysis
+      return gitmcpUrl
     } catch (error) {
-      console.error('❌ GitMCP analysis failed:', error)
-      throw error
+      console.error('❌ GitMCP URL generation failed:', error)
+      return ''
     }
   },
 
   /**
-   * Submit for a round with automatic GitMCP analysis
+   * Submit for a round with automatic GitMCP URL generation
    */
-  async submitForRoundWithAnalysis(
+  async submitForRoundWithGitMCP(
     eventId: string, 
     roundId: string, 
     submissionData: any, 
@@ -551,124 +540,53 @@ export const submissionService = {
     teamData?: any
   ) {
     try {
-      console.log('📤 Submitting with GitMCP analysis...')
+      console.log('📤 Submitting with GitMCP URL generation...')
       
-      // First, submit normally
+      // Generate GitMCP URL if GitHub link exists
+      let enhancedSubmissionData = { ...submissionData }
+      if (submissionData.githubLink) {
+        const gitmcpUrl = submissionService.generateGitMCPUrl(submissionData.githubLink)
+        if (gitmcpUrl) {
+          enhancedSubmissionData.gitmcpUrl = gitmcpUrl
+          console.log('✅ GitMCP URL added to submission:', gitmcpUrl)
+        }
+      }
+      
+      // Submit with enhanced data
       const submissionId = await submissionService.submitForRound({
         eventId,
         roundId,
         participantEmail: userEmail,
         participantName: userName,
-        submissionData,
+        submissionData: enhancedSubmissionData,
         status: 'submitted' as const,
         isTeamSubmission,
         teamName: teamData?.teamName,
         teamMembers: teamData?.teamMembers
       })
       
-      // If there's a GitHub link, analyze it with GitMCP
-      if (submissionData.githubLink) {
-        try {
-          console.log('🔗 GitHub link detected, starting analysis...')
-          const analysis = await submissionService.analyzeGitHubRepository(submissionData.githubLink)
-          
-          // Update submission with GitMCP analysis
-          await submissionService.updateSubmission(submissionId, {
-            gitmcpAnalysis: analysis,
-            analysisStatus: 'completed' as const,
-            analyzedAt: new Date()
-          })
-          
-          console.log('✅ Submission updated with GitMCP analysis')
-        } catch (analysisError) {
-          console.error('⚠️ GitMCP analysis failed, but submission was successful:', analysisError)
-          
-          // Update submission with analysis error info
-          await submissionService.updateSubmission(submissionId, {
-            analysisStatus: 'failed' as const,
-            analysisError: analysisError instanceof Error ? analysisError.message : 'Unknown error',
-            analyzedAt: new Date()
-          })
-        }
-      }
-      
+      console.log('✅ Submission completed successfully')
       return submissionId
     } catch (error) {
-      console.error('❌ Submission with GitMCP analysis failed:', error)
+      console.error('❌ Submission with GitMCP URL failed:', error)
       throw error
     }
   },
 
   /**
-   * Get event submissions with GitMCP analysis
+   * Get event submissions (unchanged, no analysis needed)
    */
-  async getEventSubmissionsWithAnalysis(eventId: string) {
+  async getEventSubmissionsSimple(eventId: string) {
     try {
-      console.log('📊 Loading submissions with GitMCP analysis for event:', eventId)
+      console.log('📊 Loading submissions for event:', eventId)
       
       // Get all submissions for the event
       const submissions = await submissionService.getEventSubmissions(eventId)
       console.log(`📄 Found ${submissions.length} submissions`)
       
-      // Analyze any GitHub repositories that haven't been analyzed yet
-      const enhancedSubmissions = await Promise.all(
-        submissions.map(async (submission) => {
-          try {
-            // Check if submission has GitHub link and no analysis yet
-            if (submission.submissionData?.githubLink && !submission.gitmcpAnalysis) {
-              console.log('🔍 Analyzing repository for submission:', submission.id)
-              
-              try {
-                const analysis = await submissionService.analyzeGitHubRepository(submission.submissionData.githubLink)
-                
-                // Update submission with analysis
-                if (submission.id) {
-                  await submissionService.updateSubmission(submission.id, {
-                    gitmcpAnalysis: analysis,
-                    analysisStatus: 'completed' as const,
-                    analyzedAt: new Date()
-                  })
-                }
-                
-                return {
-                  ...submission,
-                  gitmcpAnalysis: analysis,
-                  analysisStatus: 'completed' as const,
-                  analyzedAt: new Date()
-                }
-              } catch (analysisError) {
-                console.error(`❌ Analysis failed for ${submission.id}:`, analysisError)
-                
-                // Update submission with error status
-                if (submission.id) {
-                  await submissionService.updateSubmission(submission.id, {
-                    analysisStatus: 'failed' as const,
-                    analysisError: analysisError instanceof Error ? analysisError.message : 'Unknown error',
-                    analyzedAt: new Date()
-                  })
-                }
-                
-                return {
-                  ...submission,
-                  analysisStatus: 'failed' as const,
-                  analysisError: analysisError instanceof Error ? analysisError.message : 'Unknown error',
-                  analyzedAt: new Date()
-                }
-              }
-            }
-            
-            return submission
-          } catch (error) {
-            console.error('Error processing submission:', error)
-            return submission
-          }
-        })
-      )
-      
-      console.log('✅ Enhanced submissions with GitMCP analysis')
-      return enhancedSubmissions
+      return submissions
     } catch (error) {
-      console.error('❌ Error getting submissions with analysis:', error)
+      console.error('❌ Error getting submissions:', error)
       throw error
     }
   }

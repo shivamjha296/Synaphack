@@ -32,6 +32,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
     },
     contactEmail: '',
     status: 'published' as 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled',
+    posterImage: '',  // New field for event poster
     // Default empty arrays for required fields
     tracks: [] as string[],
     rules: [] as string[],
@@ -98,6 +99,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
         },
         contactEmail: editingEvent.contactEmail,
         status: editingEvent.status,
+        posterImage: editingEvent.posterImage || '',  // New field for event poster
         tracks: editingEvent.tracks || [],
         rules: editingEvent.rules || [],
         technologies: editingEvent.technologies || [],
@@ -242,7 +244,14 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose()
+        }
+      }}
+    >
       <div className="bg-slate-800 border border-slate-700 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
@@ -251,7 +260,7 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
           </h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-100 text-2xl"
+            className="text-slate-400 hover:text-slate-100 text-2xl bg-black/30 hover:bg-black/50 rounded-full p-2 transition-colors"
           >
             ×
           </button>
@@ -370,6 +379,200 @@ const CreateEventForm = ({ onClose, onEventCreated, organizerId, organizerName, 
                 required
               />
             </div>
+          </div>
+
+          {/* Event Poster */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-slate-100">Event Poster</h3>
+            
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Poster Image URL
+                <span className="text-xs text-slate-400 block">Provide an image URL or base64 encoded image</span>
+              </label>
+              <input
+                type="text"
+                value={formData.posterImage}
+                onChange={(e) => handleInputChange('posterImage', e.target.value)}
+                placeholder="https://example.com/poster.jpg or data:image/png;base64,..."
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {formData.posterImage && (
+              <div className="mt-3">
+                <p className="text-sm text-slate-300 mb-2">Preview:</p>
+                <div className="relative max-w-sm">
+                  <img
+                    src={formData.posterImage}
+                    alt="Event Poster Preview"
+                    className="w-full h-auto rounded-lg border border-slate-600"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sponsors */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-slate-100">Event Sponsors</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  const newSponsor = {
+                    name: '',
+                    logo: '',
+                    tier: 'bronze' as const,
+                    website: '',
+                    description: '',
+                    contactEmail: ''
+                  }
+                  handleInputChange('sponsors', [...formData.sponsors, newSponsor])
+                }}
+                className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+              >
+                Add Sponsor
+              </button>
+            </div>
+
+            {formData.sponsors.length === 0 ? (
+              <p className="text-slate-400 text-sm italic">No sponsors added yet. Click "Add Sponsor" to add sponsors.</p>
+            ) : (
+              <div className="space-y-4">
+                {formData.sponsors.map((sponsor: any, index: number) => (
+                  <div key={index} className="bg-slate-800 rounded-lg p-4 border border-slate-600">
+                    <div className="flex justify-between items-start mb-3">
+                      <h4 className="font-medium text-slate-200">Sponsor {index + 1}</h4>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updatedSponsors = formData.sponsors.filter((_: any, i: number) => i !== index)
+                          handleInputChange('sponsors', updatedSponsors)
+                        }}
+                        className="text-red-400 hover:text-red-300 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Sponsor Name *</label>
+                        <input
+                          type="text"
+                          value={sponsor.name}
+                          onChange={(e) => {
+                            const updatedSponsors = [...formData.sponsors]
+                            updatedSponsors[index] = { ...sponsor, name: e.target.value }
+                            handleInputChange('sponsors', updatedSponsors)
+                          }}
+                          placeholder="Company/Organization name"
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Sponsorship Tier</label>
+                        <select
+                          value={sponsor.tier}
+                          onChange={(e) => {
+                            const updatedSponsors = [...formData.sponsors]
+                            updatedSponsors[index] = { ...sponsor, tier: e.target.value as 'platinum' | 'gold' | 'silver' | 'bronze' }
+                            handleInputChange('sponsors', updatedSponsors)
+                          }}
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        >
+                          <option value="platinum">Platinum</option>
+                          <option value="gold">Gold</option>
+                          <option value="silver">Silver</option>
+                          <option value="bronze">Bronze</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Logo URL</label>
+                        <input
+                          type="text"
+                          value={sponsor.logo || ''}
+                          onChange={(e) => {
+                            const updatedSponsors = [...formData.sponsors]
+                            updatedSponsors[index] = { ...sponsor, logo: e.target.value }
+                            handleInputChange('sponsors', updatedSponsors)
+                          }}
+                          placeholder="https://example.com/logo.png"
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Website</label>
+                        <input
+                          type="url"
+                          value={sponsor.website || ''}
+                          onChange={(e) => {
+                            const updatedSponsors = [...formData.sponsors]
+                            updatedSponsors[index] = { ...sponsor, website: e.target.value }
+                            handleInputChange('sponsors', updatedSponsors)
+                          }}
+                          placeholder="https://sponsor-website.com"
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Contact Email</label>
+                        <input
+                          type="email"
+                          value={sponsor.contactEmail || ''}
+                          onChange={(e) => {
+                            const updatedSponsors = [...formData.sponsors]
+                            updatedSponsors[index] = { ...sponsor, contactEmail: e.target.value }
+                            handleInputChange('sponsors', updatedSponsors)
+                          }}
+                          placeholder="contact@sponsor.com"
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+                        <textarea
+                          value={sponsor.description || ''}
+                          onChange={(e) => {
+                            const updatedSponsors = [...formData.sponsors]
+                            updatedSponsors[index] = { ...sponsor, description: e.target.value }
+                            handleInputChange('sponsors', updatedSponsors)
+                          }}
+                          placeholder="Brief description of the sponsor"
+                          rows={2}
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Sponsor tier badge preview */}
+                    <div className="mt-3 flex items-center space-x-2">
+                      <span className="text-sm text-slate-300">Preview:</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        sponsor.tier === 'platinum' ? 'bg-gray-200 text-gray-800' :
+                        sponsor.tier === 'gold' ? 'bg-yellow-400 text-yellow-900' :
+                        sponsor.tier === 'silver' ? 'bg-gray-300 text-gray-700' :
+                        'bg-orange-400 text-orange-900'
+                      }`}>
+                        {sponsor.tier.toUpperCase()} SPONSOR
+                      </span>
+                      {sponsor.name && (
+                        <span className="text-sm font-medium text-slate-200">{sponsor.name}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Timeline */}

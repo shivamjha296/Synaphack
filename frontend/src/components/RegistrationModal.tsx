@@ -487,7 +487,14 @@ const RegistrationModal = ({ event, userEmail, userName, onClose, onRegistration
   )
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose()
+        }
+      }}
+    >
       <div className="bg-slate-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-700">
         {/* Team Invite Modal */}
         {showInviteModal && teamForm.teamName && (
@@ -504,7 +511,7 @@ const RegistrationModal = ({ event, userEmail, userName, onClose, onRegistration
           <h2 className="text-xl font-bold text-slate-100">Register for {event.title}</h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-100 text-2xl"
+            className="text-slate-400 hover:text-slate-100 text-2xl bg-black/30 hover:bg-black/50 rounded-full p-2 transition-colors"
           >
             ×
           </button>

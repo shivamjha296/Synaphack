@@ -62,13 +62,20 @@ const JudgeInviteModal = ({ event, onClose, onInviteCreated }: JudgeInviteModalP
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+    <div 
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose()
+        }
+      }}
+    >
       <div className="bg-gradient-to-br from-slate-900/80 to-purple-900/80 backdrop-blur-sm border border-fuchsia-500/30 rounded-xl p-6 w-full max-w-md shadow-2xl">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-semibold text-white">Invite Judge</h3>
           <button 
             onClick={onClose}
-            className="text-purple-300 hover:text-white transition-colors"
+            className="text-purple-300 hover:text-white transition-colors bg-black/30 hover:bg-black/50 rounded-full p-2"
           >
             ✕
           </button>

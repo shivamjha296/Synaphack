@@ -37,6 +37,8 @@ export interface Event {
     logo?: string
     tier: 'platinum' | 'gold' | 'silver' | 'bronze'
     website?: string
+    description?: string
+    contactEmail?: string
   }[]
   eventType: 'online' | 'offline' | 'hybrid'
   location?: string
@@ -49,6 +51,7 @@ export interface Event {
   createdAt: Date
   updatedAt: Date
   imageUrl?: string
+  posterImage?: string  // New field for event poster
   technologies: string[]
   eligibility: string[]
   contactEmail: string

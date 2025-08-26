@@ -8,6 +8,7 @@ import EventCommunication from '../EventCommunication'
 import SubmissionViewer from '../SubmissionViewer'
 import CertificateManager from '../CertificateManager'
 import JudgeInviteModal from '../JudgeInviteModal'
+import Leaderboard from '../Leaderboard'
 import { Event } from '../../lib/eventService'
 
 interface User {
@@ -33,6 +34,7 @@ const OrganizerDashboard = () => {
   const [showSubmissions, setShowSubmissions] = useState<Event | null>(null)
   const [showCertificates, setShowCertificates] = useState<Event | null>(null)
   const [showJudgeInvite, setShowJudgeInvite] = useState<Event | null>(null)
+  const [showLeaderboard, setShowLeaderboard] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if user is logged in and ensure Firebase auth state
@@ -530,6 +532,13 @@ const OrganizerDashboard = () => {
                         >
                           <span>👨‍⚖️</span>
                           <span>Invite Judge</span>
+                        </button>
+                        <button 
+                          onClick={() => setShowLeaderboard(event.id!)}
+                          className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-400 hover:to-amber-400 text-white rounded-lg text-sm font-medium transition-all shadow-md hover:shadow-lg"
+                        >
+                          <span>🏆</span>
+                          <span>Leaderboard</span>
                         </button>
                       </div>
                       
@@ -1263,6 +1272,16 @@ const OrganizerDashboard = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Leaderboard Modal */}
+        {showLeaderboard && user && (
+          <Leaderboard
+            eventId={showLeaderboard}
+            userEmail={user.email}
+            userRole="organizer"
+            onClose={() => setShowLeaderboard(null)}
+          />
         )}
       </div>
     </div>

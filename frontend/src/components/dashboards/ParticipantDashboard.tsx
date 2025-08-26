@@ -12,6 +12,8 @@ import SubmissionForm from '../SubmissionForm'
 import ParticipantCertificates from '../ParticipantCertificates'
 import SubmissionStatusCard from '../SubmissionStatusCard'
 import TeamInviteModal from '../TeamInviteModal'
+import Leaderboard from '../Leaderboard'
+import EventDetailsModal from '../EventDetailsModal'
 
 interface User {
   email: string
@@ -39,6 +41,8 @@ const ParticipantDashboard = () => {
   const [userSubmissions, setUserSubmissions] = useState<{ [eventId: string]: RoundSubmission[] }>({})
   const [submissionsLoading, setSubmissionsLoading] = useState<string | null>(null)
   const [expandedRounds, setExpandedRounds] = useState<{ [key: string]: boolean }>({})
+  const [showLeaderboard, setShowLeaderboard] = useState<string | null>(null)
+  const [eventDetailsModal, setEventDetailsModal] = useState<Event | null>(null)
 
   useEffect(() => {
     // Check if user is logged in and ensure Firebase auth state
@@ -543,13 +547,50 @@ const ParticipantDashboard = () => {
                           <span className="text-green-400">{event.organizerName}</span>
                         </div>
                       </div>
+
+                      {/* Sponsors Display */}
+                      {event.sponsors && event.sponsors.length > 0 && (
+                        <div className="mt-4">
+                          <h4 className="text-xs font-medium text-green-300 mb-2">Sponsored by:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {event.sponsors.slice(0, 3).map((sponsor: any, index: number) => (
+                              <div
+                                key={index}
+                                className={`px-2 py-1 rounded-full text-xs font-bold flex items-center space-x-1 ${
+                                  sponsor.tier === 'platinum' ? 'bg-gray-200 text-gray-800' :
+                                  sponsor.tier === 'gold' ? 'bg-yellow-400 text-yellow-900' :
+                                  sponsor.tier === 'silver' ? 'bg-gray-300 text-gray-700' :
+                                  'bg-orange-400 text-orange-900'
+                                }`}
+                              >
+                                {sponsor.logo && (
+                                  <img
+                                    src={sponsor.logo}
+                                    alt={sponsor.name}
+                                    className="w-4 h-4 rounded-full object-cover"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).style.display = 'none'
+                                    }}
+                                  />
+                                )}
+                                <span>{sponsor.name}</span>
+                              </div>
+                            ))}
+                            {event.sponsors.length > 3 && (
+                              <span className="px-2 py-1 bg-slate-700 text-slate-300 rounded-full text-xs">
+                                +{event.sponsors.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="px-6 py-4 bg-gradient-to-r from-slate-900/50 to-green-950/50 border-t border-green-500/30">
                     <div className="flex justify-between items-center">
                       <div className="flex space-x-3">
                         <button 
-                          onClick={() => setSelectedEvent(event)}
+                          onClick={() => setEventDetailsModal(event)}
                           className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors"
                         >
                           View Details
@@ -699,10 +740,60 @@ const ParticipantDashboard = () => {
                   <div key={eventWithReg.id} className="bg-slate-800/60 rounded-xl p-6 shadow-lg border border-green-700/30">
                     {/* Event Header */}
                     <div className="mb-6">
+                      {/* Event Poster */}
+                      {eventWithReg.posterImage && (
+                        <div className="relative h-32 mb-4 rounded-lg overflow-hidden">
+                          <img
+                            src={eventWithReg.posterImage}
+                            alt={`${eventWithReg.title} poster`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none'
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                        </div>
+                      )}
+
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
                           <h3 className="text-xl font-bold text-white mb-2">{eventWithReg.title}</h3>
                           <p className="text-green-200 mb-3 line-clamp-2">{eventWithReg.description}</p>
+                          
+                          {/* Sponsors Display for Registered Events */}
+                          {eventWithReg.sponsors && eventWithReg.sponsors.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="text-sm font-medium text-green-300 mb-2">Event Sponsors:</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {eventWithReg.sponsors.map((sponsor: any, index: number) => (
+                                  <div
+                                    key={index}
+                                    className={`px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-2 ${
+                                      sponsor.tier === 'platinum' ? 'bg-gray-200 text-gray-800' :
+                                      sponsor.tier === 'gold' ? 'bg-yellow-400 text-yellow-900' :
+                                      sponsor.tier === 'silver' ? 'bg-gray-300 text-gray-700' :
+                                      'bg-orange-400 text-orange-900'
+                                    }`}
+                                  >
+                                    {sponsor.logo && (
+                                      <img
+                                        src={sponsor.logo}
+                                        alt={sponsor.name}
+                                        className="w-5 h-5 rounded-full object-cover"
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).style.display = 'none'
+                                        }}
+                                      />
+                                    )}
+                                    <span>{sponsor.name}</span>
+                                    <span className="text-xs opacity-75">
+                                      ({sponsor.tier.toUpperCase()})
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                           
                           {/* Progress Bar */}
                           <div className="mb-4">
@@ -1032,7 +1123,7 @@ const ParticipantDashboard = () => {
                       <div className="flex justify-between items-center">
                         <div className="flex space-x-3">
                           <button 
-                            onClick={() => setSelectedEvent(eventWithReg)}
+                            onClick={() => setEventDetailsModal(eventWithReg)}
                             className="text-green-400 hover:text-green-300 text-sm font-medium transition-colors"
                           >
                             View Details
@@ -1042,6 +1133,12 @@ const ParticipantDashboard = () => {
                             className="text-purple-400 hover:text-purple-300 text-sm font-medium transition-colors"
                           >
                             💬 Join Chat
+                          </button>
+                          <button 
+                            onClick={() => setShowLeaderboard(eventWithReg.id!)}
+                            className="text-yellow-400 hover:text-yellow-300 text-sm font-medium transition-colors"
+                          >
+                            🏆 Leaderboard
                           </button>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -1408,6 +1505,27 @@ const ParticipantDashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Leaderboard Modal */}
+      {showLeaderboard && user && (
+        <Leaderboard
+          eventId={showLeaderboard}
+          userEmail={user.email}
+          userRole="participant"
+          onClose={() => setShowLeaderboard(null)}
+        />
+      )}
+
+      {/* Event Details Modal */}
+      {eventDetailsModal && user && (
+        <EventDetailsModal
+          event={eventDetailsModal}
+          isOpen={!!eventDetailsModal}
+          onClose={() => setEventDetailsModal(null)}
+          userRole="participant"
+          userEmail={user.email}
+        />
       )}
     </div>
   )

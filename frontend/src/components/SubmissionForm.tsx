@@ -128,8 +128,8 @@ const SubmissionForm = ({
         teamMembers
       } : undefined
 
-      // Use the new GitMCP-integrated submission method
-      await submissionService.submitForRoundWithAnalysis(
+      // Use the new GitMCP URL generation method
+      await submissionService.submitForRoundWithGitMCP(
         event.id!,
         round.id,
         submissionDataObject,
@@ -139,7 +139,7 @@ const SubmissionForm = ({
         teamData
       )
       
-      console.log('Submission with GitMCP analysis completed successfully')
+      console.log('Submission with GitMCP URL completed successfully')
       onSubmissionComplete()
       onClose()
     } catch (err: any) {
@@ -154,7 +154,14 @@ const SubmissionForm = ({
   const hoursUntilDeadline = Math.floor(timeUntilDeadline / (1000 * 60 * 60))
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose()
+        }
+      }}
+    >
       <div className="bg-slate-800 border border-slate-700 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
@@ -168,7 +175,7 @@ const SubmissionForm = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-100 text-2xl"
+            className="text-slate-400 hover:text-slate-100 text-2xl bg-black/30 hover:bg-black/50 rounded-full p-2 transition-colors"
           >
             ×
           </button>
@@ -236,8 +243,8 @@ const SubmissionForm = ({
               </p>
               {formData.githubLink && (
                 <div className="mt-2 p-2 bg-purple-900/20 border border-purple-500/30 rounded text-xs text-purple-200">
-                  <span className="mr-1">🔍</span>
-                  <strong>Auto-analysis enabled:</strong> Your repository will be automatically analyzed for tech stack and insights when you submit.
+                  <span className="mr-1">�</span>
+                  <strong>GitMCP URL:</strong> A direct link to GitMCP analysis will be automatically generated and visible to judges.
                 </div>
               )}
             </div>
@@ -387,16 +394,16 @@ const SubmissionForm = ({
             >
               {isLoading 
                 ? (existingSubmission 
-                    ? 'Updating & Analyzing...' 
+                    ? 'Updating...' 
                     : formData.githubLink 
-                      ? 'Submitting & Analyzing Repository...' 
+                      ? 'Submitting & Generating GitMCP URL...' 
                       : 'Submitting...') 
                 : existingSubmission 
                   ? 'Update Submission'
                   : isSubmissionLate 
                     ? 'Submit Late' 
                     : formData.githubLink
-                      ? 'Submit & Analyze Repository'
+                      ? 'Submit & Generate GitMCP URL'
                       : 'Submit'
               }
             </button>
